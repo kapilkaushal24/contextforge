@@ -4,9 +4,26 @@ Chrome extension + backend service that estimates and reduces token usage in pro
 AI chat tools, while preserving user intent — privacy-first, provider-agnostic, built to grow
 into an enterprise product.
 
-**Status:** Planning complete (Phases 0–2). No application code yet — see
-[docs/product/development-phases.md](docs/product/development-phases.md) for what's next and
-why implementation hasn't started.
+**Status:** Phases 0–4 complete — planning docs, shared contracts, and a buildable Chrome
+extension shell. Backend API (Phase 5) is next. See
+[docs/product/development-phases.md](docs/product/development-phases.md).
+
+## Quick start
+
+```bash
+npm install                 # installs the extension + contracts workspaces
+npm run build:contracts
+npm run build:extension     # outputs apps/chrome-extension/dist — load it unpacked in Chrome
+npm run typecheck
+```
+
+Python domain package:
+
+```bash
+cd packages/optimization-core
+python -m venv .venv && ./.venv/Scripts/python.exe -m pip install -e ".[dev]"
+./.venv/Scripts/python.exe -m pytest
+```
 
 ## Start here
 
@@ -16,6 +33,9 @@ why implementation hasn't started.
 - [AI/ML Architecture & Optimization Pipeline](docs/architecture/ai-ml.md)
 - [Security & Privacy](docs/security/privacy-security.md)
 - [Repository Structure](docs/architecture/folder-structure.md)
+- [Chrome Extension shell](apps/chrome-extension/README.md)
+- [Shared TS contracts](packages/contracts/README.md)
+- [Python domain interfaces](packages/optimization-core/README.md)
 - [Database ERD](docs/architecture/database-erd.md)
 - [API Contracts](docs/api/contracts.md)
 - [MVP Scope & Roadmap](docs/product/mvp-scope.md)

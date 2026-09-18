@@ -1,0 +1,22 @@
+[project]
+name = "optimization-core"
+version = "0.1.0"
+description = "Pure domain logic for the AI Token Optimizer: entities and interfaces, zero framework dependencies."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "mypy>=1.11", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/optimization_core"]
+
+[tool.mypy]
+strict = true
+
+[tool.ruff]
+line-length = 100

@@ -1,0 +1,16 @@
+{
+  "name": "ai-token-optimizer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Monorepo root — npm workspaces linking the Chrome extension to shared TypeScript packages.",
+  "workspaces": [
+    "apps/chrome-extension",
+    "packages/contracts"
+  ],
+  "scripts": {
+    "build:contracts": "npm run build --workspace=@ai-token-optimizer/contracts",
+    "build:extension": "npm run build --workspace=@ai-token-optimizer/chrome-extension",
+    "dev:extension": "npm run dev --workspace=@ai-token-optimizer/chrome-extension",
+    "typecheck": "npm run typecheck --workspace=@ai-token-optimizer/contracts && npm run typecheck --workspace=@ai-token-optimizer/chrome-extension"
+  }
+}

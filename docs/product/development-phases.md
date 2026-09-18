@@ -7,10 +7,13 @@ starts writing code before the prior phase's docs/interfaces are agreed.
 - **Phase 1** — Architecture ([system-overview.md](../architecture/system-overview.md),
   ai-ml.md, chrome-extension.md, privacy-security.md) ✅ this batch
 - **Phase 2** — Repository structure ([folder-structure.md](../architecture/folder-structure.md)) ✅ this batch
-- **Phase 3** — Contracts/interfaces (`packages/contracts`, `ITokenizer`, `IAIProvider`,
-  `IOptimizationStrategy`, [API contracts](../api/contracts.md)) — next
-- **Phase 4** — Chrome extension shell (MV3 scaffold, popup/options skeleton, one adapter stub)
-- **Phase 5** — Backend API (FastAPI skeleton, routing, DTOs, no real logic yet)
+- **Phase 3** — Contracts/interfaces (`packages/contracts` TS types,
+  `packages/optimization-core` Python domain entities + `Protocol` interfaces for
+  `ITokenizer`/`IAIProvider`/`IOptimizationStrategy`/etc., [API contracts](../api/contracts.md)) ✅
+- **Phase 4** — Chrome extension shell (MV3 manifest via CRXJS, background service worker,
+  content script with the `IPlatformAdapter` factory wired for ChatGPT/Claude/generic, React
+  popup + options pages, Tailwind, builds and lints clean) ✅
+- **Phase 5** — Backend API (FastAPI skeleton, routing, DTOs, no real logic yet) — next
 - **Phase 6** — Deterministic optimizer (Strategy A)
 - **Phase 7** — Token estimation (`ITokenizer` implementations)
 - **Phase 8** — AI optimization (structural + semantic compression, Model Router)
