@@ -1,5 +1,6 @@
 import { defineManifest } from "@crxjs/vite-plugin";
 import pkg from "./package.json";
+import { allOriginPatterns } from "./src/constants/platforms.js";
 
 /**
  * Manifest V3. Permissions are kept to the minimum necessary (ADR-001):
@@ -7,7 +8,13 @@ import pkg from "./package.json";
  * - `activeTab` instead of a broad `tabs` permission.
  * - `host_permissions` scoped to the specific AI platforms we support plus the
  *   backend API origin — never `<all_urls>`.
+ *
+ * The AI platform origins themselves are never hardcoded here — they're derived from
+ * `src/constants/platforms.ts`, the single registry that also drives adapter matching
+ * and the background tab-detection logic (see ADR-009).
  */
+const platformOrigins = allOriginPatterns();
+
 export default defineManifest({
   manifest_version: 3,
   name: "AI Token Optimizer",
@@ -34,19 +41,13 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: [
-        "https://chat.openai.com/*",
-        "https://chatgpt.com/*",
-        "https://claude.ai/*",
-      ],
+      matches: platformOrigins,
       js: ["src/content/index.ts"],
       run_at: "document_idle",
     },
   ],
   host_permissions: [
-    "https://chat.openai.com/*",
-    "https://chatgpt.com/*",
-    "https://claude.ai/*",
+    ...platformOrigins,
     // Dev-only backend origin; replaced with the production API origin at build time
     // via an environment-specific manifest override once the backend (Phase 5) ships.
     "http://localhost:8000/*",

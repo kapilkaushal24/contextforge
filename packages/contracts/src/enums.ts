@@ -12,8 +12,15 @@ export type OptimizationMode =
 
 export type PrivacyPolicy = "cloud_allowed" | "local_only";
 
-/** Platform id, as used by `IPlatformAdapter.id` and reported to the API. */
-export type Platform = "chatgpt" | "claude" | "gemini" | "generic";
+/**
+ * Platform id, as used by `IPlatformAdapter.id` and reported to the API.
+ *
+ * Deliberately an open `string`, not a closed union — the set of known platforms is
+ * defined by the extension's platform registry (apps/chrome-extension/src/constants/
+ * platforms.ts) and auto-detected from the active tab's URL, not hardcoded here or
+ * anywhere else (ADR-009). "generic" is reserved for any unrecognized platform.
+ */
+export type Platform = string;
 
 export type PromptType = "code" | "documentation" | "conversation" | "general";
 

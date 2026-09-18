@@ -6,14 +6,14 @@ from optimization_core.entities import (
     OptimizationResult,
     SemanticValidationResult,
 )
-from optimization_core.enums import ChangeImpact, ChangeType, OptimizationMode, Platform, PrivacyPolicy
+from optimization_core.enums import ChangeImpact, ChangeType, OptimizationMode, PrivacyPolicy
 
 
 def test_optimization_request_rejects_empty_text() -> None:
     with pytest.raises(ValueError):
         OptimizationRequest(
             text="   ",
-            platform=Platform.CHATGPT,
+            platform="chatgpt",
             mode=OptimizationMode.BALANCED,
             privacy_policy=PrivacyPolicy.CLOUD_ALLOWED,
         )
@@ -23,7 +23,7 @@ def test_optimization_request_rejects_oversized_text() -> None:
     with pytest.raises(ValueError):
         OptimizationRequest(
             text="x" * 100_001,
-            platform=Platform.CHATGPT,
+            platform="chatgpt",
             mode=OptimizationMode.BALANCED,
             privacy_policy=PrivacyPolicy.CLOUD_ALLOWED,
         )

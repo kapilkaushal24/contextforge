@@ -1,3 +1,4 @@
+import { detectPlatform } from "../constants/platforms.js";
 import { CLAUDE_SELECTORS } from "../constants/selectors.js";
 import type { IPlatformAdapter } from "../types/platform-adapter.js";
 
@@ -5,7 +6,7 @@ export class ClaudeAdapter implements IPlatformAdapter {
   readonly id = "claude" as const;
 
   matches(url: string): boolean {
-    return /^https:\/\/claude\.ai\//.test(url);
+    return detectPlatform(url)?.id === this.id;
   }
 
   getInputElement(): HTMLElement | null {

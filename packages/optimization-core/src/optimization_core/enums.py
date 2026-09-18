@@ -19,11 +19,11 @@ class PrivacyPolicy(str, Enum):
     LOCAL_ONLY = "local_only"
 
 
-class Platform(str, Enum):
-    CHATGPT = "chatgpt"
-    CLAUDE = "claude"
-    GEMINI = "gemini"
-    GENERIC = "generic"
+# Deliberately a plain `str` alias, not a closed Enum — the set of known platforms is
+# defined by the extension's platform registry (apps/chrome-extension/src/constants/
+# platforms.ts) and auto-detected from the active tab's URL, not hardcoded on the
+# backend either (ADR-009). "generic" is reserved for any unrecognized platform.
+Platform = str
 
 
 class PromptType(str, Enum):

@@ -40,6 +40,29 @@ single adapter file per platform (`adapters/chatgpt.adapter.ts`, etc.) and nowhe
 site changes its DOM, only that file changes. Selectors are centralized as named constants
 (`constants/selectors.ts`) so they can be versioned and updated without touching adapter logic.
 
+`id` is a plain `string`, not a closed enum — see §3a.
+
+## 3a. Platform registry & auto-detection (ADR-009)
+
+"Which AI platform" is data, not a type. `constants/platforms.ts` exports a single
+`PLATFORM_REGISTRY` (id, display name, URL patterns, manifest origin patterns) and a
+`detectPlatform(url)` helper — the **only** place a platform's URL patterns are defined.
+Everything else derives from it:
+
+- `manifest.config.ts` builds `content_scripts.matches` / `host_permissions` from
+  `allOriginPatterns()` instead of hand-copied literals.
+- Each adapter's `matches()` delegates to `detectPlatform(url)?.id === this.id`.
+- The background service worker listens to `chrome.tabs.onActivated` /
+  `chrome.tabs.onUpdated` and writes the detected platform for the active tab to
+  `chrome.storage.session` (`services/active-platform-store.ts`) on every tab switch or
+  completed navigation — so "what platform is the user on" is tracked continuously.
+- The popup's `useActivePlatform()` hook live-queries `chrome.tabs` on open and re-resolves on
+  `chrome.storage.onChanged`, showing a `PlatformBadge` ("Detected: ChatGPT" /
+  "Not on a supported AI site").
+
+Adding a platform is: one entry in `PLATFORM_REGISTRY` + one adapter file. No enum to widen, no
+manifest edit, no backend change (the `Platform` field in the API contract is an open string).
+
 ## 4. Messaging flow
 
 Content script → `chrome.runtime.sendMessage` → background service worker → backend API →

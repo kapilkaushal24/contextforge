@@ -1,3 +1,4 @@
+import { detectPlatform } from "../constants/platforms.js";
 import { CHATGPT_SELECTORS } from "../constants/selectors.js";
 import type { IPlatformAdapter } from "../types/platform-adapter.js";
 
@@ -5,7 +6,7 @@ export class ChatGptAdapter implements IPlatformAdapter {
   readonly id = "chatgpt" as const;
 
   matches(url: string): boolean {
-    return /^https:\/\/(chat\.openai\.com|chatgpt\.com)\//.test(url);
+    return detectPlatform(url)?.id === this.id;
   }
 
   getInputElement(): HTMLElement | null {

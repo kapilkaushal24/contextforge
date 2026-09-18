@@ -1,6 +1,7 @@
 import type { ExtensionMessage } from "../types/messages.js";
 import { getSettings } from "../services/settings-store.js";
 import { optimizePrompt } from "../services/api-client.js";
+import { setActivePlatform } from "../services/active-platform-store.js";
 
 /**
  * MV3 background service worker. Stateless between events by design — any state
@@ -45,3 +46,35 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendRe
       return false;
   }
 });
+
+/**
+ * Auto-detects the active AI platform whenever the user switches tabs or a tab
+ * finishes navigating (ADR-009). No platform id is hardcoded here — detection is
+ * entirely driven by the registry in constants/platforms.ts, so supporting a new
+ * platform never requires touching this file.
+ */
+async function handleTabChange(tab: chrome.tabs.Tab | undefined): Promise<void> {
+  if (!tab) return;
+  await setActivePlatform(tab);
+}
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  void chrome.tabs.get(tabId).then(handleTabChange).catch(() => {
+    // Tab may have closed between the event firing and this lookup — safe to ignore.
+  });
+});
+
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete") {
+    void handleTabChange(tab);
+  }
+});
+
+// Populate immediately on service-worker startup so the popup has data before the
+// first tab switch/navigation event fires.
+chrome.tabs
+  .query({ active: true, lastFocusedWindow: true })
+  .then(([tab]) => handleTabChange(tab))
+  .catch(() => {
+    // No focused window yet (e.g. extension just installed) — safe to ignore.
+  });

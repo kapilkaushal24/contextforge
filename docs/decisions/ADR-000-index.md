@@ -10,6 +10,7 @@
 | 006 | Semantic validation gate before auto-apply | Proposed |
 | 007 | Cloud vs. local inference, policy-driven via Model Router | Proposed |
 | 008 | PostgreSQL for durable state + Redis for cache/rate-limit | Proposed |
+| [009](./ADR-009-dynamic-platform-registry.md) | Dynamic platform registry + tab-based auto-detection (replaces the hardcoded platform enum) | Accepted |
 
 Each ADR follows: **Context → Decision → Alternatives considered → Consequences**.
 New ADRs are added as significant, hard-to-reverse technical decisions are made — not for
