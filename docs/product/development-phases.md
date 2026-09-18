@@ -13,8 +13,12 @@ starts writing code before the prior phase's docs/interfaces are agreed.
 - **Phase 4** — Chrome extension shell (MV3 manifest via CRXJS, background service worker,
   content script with the `IPlatformAdapter` factory wired for ChatGPT/Claude/generic, React
   popup + options pages, Tailwind, builds and lints clean) ✅
-- **Phase 5** — Backend API (FastAPI skeleton, routing, DTOs, no real logic yet) — next
-- **Phase 6** — Deterministic optimizer (Strategy A)
+- **Phase 5** — Backend API (FastAPI skeleton: Clean Architecture layering, all `/api/v1`
+  routes/DTOs from the contract doc, consistent error envelope + request-ID correlation,
+  structured JSON logging, API-key auth wiring (off by default), CORS, Docker/Compose.
+  Optimization logic is a documented placeholder — see
+  [services/optimization-service/README.md](../../services/optimization-service/README.md)) ✅
+- **Phase 6** — Deterministic optimizer (Strategy A) — next
 - **Phase 7** — Token estimation (`ITokenizer` implementations)
 - **Phase 8** — AI optimization (structural + semantic compression, Model Router)
 - **Phase 9** — Semantic validation

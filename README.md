@@ -4,8 +4,9 @@ Chrome extension + backend service that estimates and reduces token usage in pro
 AI chat tools, while preserving user intent — privacy-first, provider-agnostic, built to grow
 into an enterprise product.
 
-**Status:** Phases 0–4 complete — planning docs, shared contracts, and a buildable Chrome
-extension shell. Backend API (Phase 5) is next. See
+**Status:** Phases 0–5 complete — planning docs, shared contracts, a buildable Chrome extension
+shell (with dynamic AI-platform detection, ADR-009), and a running FastAPI backend skeleton.
+Deterministic optimization (Phase 6) is next. See
 [docs/product/development-phases.md](docs/product/development-phases.md).
 
 ## Quick start
@@ -17,12 +18,17 @@ npm run build:extension     # outputs apps/chrome-extension/dist — load it unp
 npm run typecheck
 ```
 
-Python domain package:
+Python packages (domain + backend):
 
 ```bash
 cd packages/optimization-core
 python -m venv .venv && ./.venv/Scripts/python.exe -m pip install -e ".[dev]"
 ./.venv/Scripts/python.exe -m pytest
+
+cd ../../services/optimization-service
+python -m venv .venv
+./.venv/Scripts/python.exe -m pip install -e "../../packages/optimization-core" -e ".[dev]"
+./.venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000   # http://localhost:8000/docs
 ```
 
 ## Start here
@@ -36,6 +42,7 @@ python -m venv .venv && ./.venv/Scripts/python.exe -m pip install -e ".[dev]"
 - [Chrome Extension shell](apps/chrome-extension/README.md)
 - [Shared TS contracts](packages/contracts/README.md)
 - [Python domain interfaces](packages/optimization-core/README.md)
+- [Backend API service](services/optimization-service/README.md)
 - [Database ERD](docs/architecture/database-erd.md)
 - [API Contracts](docs/api/contracts.md)
 - [MVP Scope & Roadmap](docs/product/mvp-scope.md)

@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: services/optimization-service/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      AITO_ENVIRONMENT: development
+      AITO_CORS_ALLOW_ORIGINS: '["*"]'
+    # Postgres and Redis are added once real persistence/caching lands (Phase 5's
+    # domain logic is still a placeholder — see docs/product/development-phases.md);
+    # wiring them in now would be a database no code in this repo talks to yet.
