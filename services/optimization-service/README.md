@@ -3,9 +3,10 @@
 FastAPI backend implementing the `/api/v1/*` surface described in
 [docs/api/contracts.md](../../docs/api/contracts.md). This is the **Phase 5 skeleton**: routing,
 DTOs, error handling, request correlation, and Clean Architecture layering are real and tested;
-the optimization logic behind `/optimize`, `/analyze`, `/estimate-tokens`, and `/validate` is a
-documented placeholder (word-count-based, no LLM calls) until Phases 6-9 replace it strategy by
-strategy — the request/response contracts and route code do not change when they do.
+`/optimize` now runs the **deterministic strategy** (Phase 6: whitespace cleanup, exact duplicate
+line/sentence removal, aggressive-mode pleasantry removal; fenced code never touched; no LLM).
+`/analyze`, `/estimate-tokens`, and `/validate` remain documented placeholders until Phases 7 and 9
+replace them — the request/response contracts and route code do not change when they do.
 
 ## Layering
 
@@ -37,7 +38,7 @@ Copy `.env.example` to `.env` and adjust. Nothing is hard-coded (§31) — see
 
 ## Not yet implemented
 
-- Real optimization strategies (Phases 6-9) — see the docstring at the top of each
+- Structural/semantic strategies and real tokenizers/validator (Phases 7-9) — see the docstring at the top of each
   `app/application/*_use_case.py` file for exactly what each placeholder does and what replaces
   it.
 - Database/Redis (no persistence needed yet — settings are in-memory, usage stats are zeroed).

@@ -8,7 +8,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from optimization_core.enums import ChangeImpact, ChangeType, OptimizationMode, Platform, PrivacyPolicy
+from optimization_core.enums import (
+    ChangeImpact,
+    ChangeType,
+    OptimizationMode,
+    Platform,
+    PrivacyPolicy,
+)
 
 
 @dataclass(frozen=True, slots=True)

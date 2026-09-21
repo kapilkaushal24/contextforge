@@ -20,6 +20,41 @@ def test_optimize_happy_path(client: TestClient) -> None:
     assert body["confidence"] == 1.0
 
 
+def test_optimize_compresses_redundant_prompt(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/optimize",
+        json={
+            "text": "Use PostgreSQL for the database. Add tests.   Use PostgreSQL for the database.",
+            "platform": "claude",
+            "mode": "balanced",
+            "privacyPolicy": "cloud_allowed",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["optimizedText"] == "Use PostgreSQL for the database. Add tests."
+    assert body["tokensSaved"] > 0
+    assert body["originalText"].endswith("database.")
+    assert {c["type"] for c in body["changes"]} >= {"deduplication"}
+
+
+def test_optimize_never_modifies_fenced_code(client: TestClient) -> None:
+    code = "```python\nx  =  1\n\n\n\nx  =  1\n```"
+    response = client.post(
+        "/api/v1/optimize",
+        json={
+            "text": f"Fix the bug.   Fix the bug.\n\n{code}",
+            "platform": "chatgpt",
+            "mode": "aggressive",
+            "privacyPolicy": "cloud_allowed",
+        },
+    )
+
+    assert response.status_code == 200
+    assert code in response.json()["optimizedText"]
+
+
 def test_optimize_rejects_empty_text_with_error_envelope(client: TestClient) -> None:
     response = client.post(
         "/api/v1/optimize",

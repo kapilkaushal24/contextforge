@@ -18,8 +18,10 @@ starts writing code before the prior phase's docs/interfaces are agreed.
   structured JSON logging, API-key auth wiring (off by default), CORS, Docker/Compose.
   Optimization logic is a documented placeholder — see
   [services/optimization-service/README.md](../../services/optimization-service/README.md)) ✅
-- **Phase 6** — Deterministic optimizer (Strategy A) — next
-- **Phase 7** — Token estimation (`ITokenizer` implementations)
+- **Phase 6** — Deterministic optimizer (Strategy A): `DeterministicCompressionStrategy` in
+  `optimization-core` (mode-tiered, code-fence-safe, idempotent, never grows text), wired into
+  `/optimize` ✅
+- **Phase 7** — Token estimation (`ITokenizer` implementations) — next
 - **Phase 8** — AI optimization (structural + semantic compression, Model Router)
 - **Phase 9** — Semantic validation
 - **Phase 10** — Platform adapters (ChatGPT, Claude)

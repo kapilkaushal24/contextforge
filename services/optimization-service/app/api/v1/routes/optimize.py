@@ -1,15 +1,20 @@
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
 from optimization_core.entities import OptimizationRequest
 from optimization_core.enums import OptimizationMode, PrivacyPolicy
 
 from app.api.v1.schemas import OptimizationChange, OptimizeRequest, OptimizeResult
-from app.application.optimize_use_case import run_stub_optimization
+from app.application.optimize_use_case import run_optimization
+from app.config.settings import Settings, get_settings
 
 router = APIRouter(tags=["optimize"])
 
 
 @router.post("/optimize", response_model=OptimizeResult)
-async def optimize(payload: OptimizeRequest) -> OptimizeResult:
+async def optimize(
+    payload: OptimizeRequest, settings: Annotated[Settings, Depends(get_settings)]
+) -> OptimizeResult:
     domain_request = OptimizationRequest(
         text=payload.text,
         platform=payload.platform,
@@ -17,7 +22,7 @@ async def optimize(payload: OptimizeRequest) -> OptimizeResult:
         privacy_policy=PrivacyPolicy(payload.privacy_policy),
         conversation_context=tuple(payload.conversation_context or ()),
     )
-    result = run_stub_optimization(domain_request)
+    result = run_optimization(domain_request, settings.semantic_confidence_threshold)
 
     return OptimizeResult(
         original_text=result.original_text,
