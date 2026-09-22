@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from optimization_core.enums import ChangeType, OptimizationMode
@@ -6,7 +8,7 @@ from optimization_core.strategies import DeterministicCompressionStrategy
 
 
 def run(text: str, mode: OptimizationMode = OptimizationMode.BALANCED) -> tuple[str, set[ChangeType]]:
-    optimized, changes = DeterministicCompressionStrategy(mode).optimize(text)
+    optimized, changes = asyncio.run(DeterministicCompressionStrategy(mode).optimize(text))
     return optimized, {c.type for c in changes}
 
 

@@ -21,10 +21,18 @@ starts writing code before the prior phase's docs/interfaces are agreed.
 - **Phase 6** — Deterministic optimizer (Strategy A): `DeterministicCompressionStrategy` in
   `optimization-core` (mode-tiered, code-fence-safe, idempotent, never grows text), wired into
   `/optimize` ✅
-- **Phase 7** — Token estimation (`ITokenizer` implementations) — next
-- **Phase 8** — AI optimization (structural + semantic compression, Model Router)
-- **Phase 9** — Semantic validation
-- **Phase 10** — Platform adapters (ChatGPT, Claude)
+- **Phase 7** — Token estimation: `packages/tokenizers` (`OpenAITokenizer` via optional tiktoken
+  with heuristic fallback, calibrated heuristics for Anthropic/Gemini/generic, `TokenizerRegistry`),
+  config-driven platform→tokenizer mapping, estimated cost savings ✅
+- **Phase 8** — AI optimization: structural strategy (B), LLM semantic strategy (F) behind
+  `IAIProvider` (`packages/provider-adapters`: OpenAI, Anthropic), `ModelRouter` with privacy /
+  mode / cost gates, deterministic safety gate on LLM output, prompt-injection trust boundary ✅
+  (adapters verified against mocked transports only — not yet exercised with live API keys)
+- **Phase 9** — Semantic validation: `HeuristicSemanticValidator` (deterministic, local; severity-
+  weighted constraint preservation + content-word similarity + confidence capped on any hard loss),
+  shared feature extractor with the LLM safety gate, `reviewReasons` exposed via the API/contracts ✅
+  (heuristic and untuned — calibrate with the Phase 13 benchmark)
+- **Phase 10** — Platform adapters (ChatGPT, Claude) — next
 - **Phase 11** — Security/privacy hardening (PII detection, injection tests)
 - **Phase 12** — Observability (structured logging, metrics, tracing)
 - **Phase 13** — Testing/evaluation (unit, integration, security, eval harness)

@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,6 +25,28 @@ class Settings(BaseSettings):
     # Cost-optimization rule (docs/architecture/ai-ml.md §5): skip the LLM call when its
     # estimated cost would exceed the estimated token savings it could produce.
     cost_optimization_enabled: bool = True
+
+    # Which tokenizer provider to use per platform id. Config, not code: platform ids are
+    # open strings (ADR-009); unmapped platforms use the generic tokenizer.
+    platform_tokenizer_map: dict[str, str] = {
+        "chatgpt": "openai",
+        "claude": "anthropic",
+        "gemini": "gemini",
+    }
+
+    # Per-1k-input-token USD price used ONLY for estimated cost savings. Model prices
+    # change; set this to your model's current price. Never presented as billed cost.
+    input_price_per_1k_usd: float = 0.003
+
+    # --- LLM (semantic) optimization: off unless explicitly enabled AND a key is set ---
+    enable_llm_optimization: bool = False
+    llm_provider: str = "openai"  # "openai" | "anthropic"
+    llm_model: str = "gpt-4o-mini"
+    llm_api_key: SecretStr | None = None
+    llm_timeout_seconds: float = 20.0
+    # Prices of the optimizer LLM itself, used by the router's cost gate (USD per 1k tokens).
+    llm_input_price_per_1k_usd: float = 0.00015
+    llm_output_price_per_1k_usd: float = 0.0006
 
 
 @lru_cache

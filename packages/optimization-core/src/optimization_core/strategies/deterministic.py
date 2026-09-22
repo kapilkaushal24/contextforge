@@ -19,10 +19,10 @@ import re
 
 from optimization_core.entities import OptimizationChange
 from optimization_core.enums import ChangeImpact, ChangeType, OptimizationMode, PromptType
+from optimization_core.fences import FENCE_RE, is_fenced_block
 
 MIN_DEDUPE_WORDS = 3
 
-_FENCE_RE = re.compile(r"(```.*?```)", re.DOTALL)
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 _INLINE_SPACES_RE = re.compile(r"(?<=\S)[ \t]{2,}")
 _BLANK_RUNS_RE = re.compile(r"\n{3,}")
@@ -58,13 +58,13 @@ class DeterministicCompressionStrategy:
     def applies_to(self, prompt_type: PromptType, mode: OptimizationMode) -> bool:
         return True
 
-    def optimize(self, text: str) -> tuple[str, list[OptimizationChange]]:
+    async def optimize(self, text: str) -> tuple[str, list[OptimizationChange]]:
         counts = {"whitespace": 0, "dedupe": 0, "boilerplate": 0}
         seen: set[str] = set()
         parts: list[str] = []
 
-        for segment in _FENCE_RE.split(text):
-            if segment.startswith("```") and segment.endswith("```") and len(segment) >= 6:
+        for segment in FENCE_RE.split(text):
+            if is_fenced_block(segment):
                 parts.append(segment)
                 continue
             prose = self._clean_whitespace(segment, counts)

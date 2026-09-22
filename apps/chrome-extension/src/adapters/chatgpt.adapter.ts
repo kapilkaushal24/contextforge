@@ -2,6 +2,13 @@ import { detectPlatform } from "../constants/platforms.js";
 import { CHATGPT_SELECTORS } from "../constants/selectors.js";
 import type { IPlatformAdapter } from "../types/platform-adapter.js";
 
+/**
+ * Selectors: `promptInput` — the composer's contenteditable div (`#prompt-textarea`).
+ * `submitButton` is defined in constants/selectors.ts for documentation but
+ * deliberately unused here — see the no-submit-interception note in
+ * types/platform-adapter.ts.
+ */
+
 export class ChatGptAdapter implements IPlatformAdapter {
   readonly id = "chatgpt" as const;
 
@@ -22,25 +29,5 @@ export class ChatGptAdapter implements IPlatformAdapter {
     if (!el) return;
     el.textContent = text;
     el.dispatchEvent(new InputEvent("input", { bubbles: true }));
-  }
-
-  onSubmitIntercept(callback: (text: string) => Promise<string>): void {
-    const submitButton = document.querySelector<HTMLButtonElement>(CHATGPT_SELECTORS.submitButton);
-    if (!submitButton) return;
-
-    submitButton.addEventListener(
-      "click",
-      async (event) => {
-        const current = this.getCurrentText();
-        const finalText = await callback(current);
-        if (finalText !== current) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          this.setText(finalText);
-          submitButton.click();
-        }
-      },
-      { capture: true },
-    );
   }
 }

@@ -1,8 +1,12 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.deps import close_providers
 from app.api.errors import (
     ApiException,
     api_exception_handler,
@@ -15,11 +19,18 @@ from app.observability.logging import configure_logging
 from app.observability.middleware import RequestIdMiddleware
 
 
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    yield
+    await close_providers()
+
+
 def create_app() -> FastAPI:
     configure_logging()
     settings = get_settings()
 
     app = FastAPI(
+        lifespan=lifespan,
         title="AI Token Optimizer API",
         version="0.1.0",
         description="Phase 5 skeleton — routing, DTOs, and layering are real; "

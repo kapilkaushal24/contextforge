@@ -44,9 +44,4 @@ export class GenericAdapter implements IPlatformAdapter {
       el.dispatchEvent(new InputEvent("input", { bubbles: true }));
     }
   }
-
-  onSubmitIntercept(_callback: (text: string) => Promise<string>): void {
-    // The generic adapter has no reliable submit-button selector; interception is
-    // opt-in per site and left unimplemented here rather than guessed at.
-  }
 }

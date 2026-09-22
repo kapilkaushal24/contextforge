@@ -1,0 +1,27 @@
+[project]
+name = "aito-tokenizers"
+version = "0.1.0"
+description = "ITokenizer implementations (OpenAI via tiktoken, heuristics for other providers)."
+requires-python = ">=3.12"
+dependencies = ["optimization-core"]
+
+[project.optional-dependencies]
+openai = ["tiktoken>=0.8"]
+dev = ["pytest>=8.0", "mypy>=1.11", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aito_tokenizers"]
+
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["tiktoken"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100

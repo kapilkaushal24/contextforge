@@ -9,6 +9,7 @@ provider, or strategy must never require touching call sites.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 from optimization_core.entities import (
@@ -18,6 +19,15 @@ from optimization_core.entities import (
     SemanticValidationResult,
 )
 from optimization_core.enums import OptimizationMode, PromptType, TokenizerProvider
+
+
+@dataclass(frozen=True, slots=True)
+class RoutingDecision:
+    """`strategy is None` means: stop at the deterministic/structural result. `reason`
+    is a stable machine-readable code, safe to log (never contains prompt text)."""
+
+    strategy: IOptimizationStrategy | None
+    reason: str
 
 
 @runtime_checkable
@@ -54,7 +64,7 @@ class IOptimizationStrategy(Protocol):
 
     def applies_to(self, prompt_type: PromptType, mode: OptimizationMode) -> bool: ...
 
-    def optimize(self, text: str) -> tuple[str, list[OptimizationChange]]: ...
+    async def optimize(self, text: str) -> tuple[str, list[OptimizationChange]]: ...
 
 
 @runtime_checkable
@@ -68,7 +78,11 @@ class IAIProvider(Protocol):
 
     provider_id: str
 
-    async def complete(self, prompt: str, *, max_tokens: int) -> str: ...
+    async def complete(self, *, system: str, user: str, max_tokens: int) -> str:
+        """`system` carries trusted optimizer instructions; `user` carries untrusted
+        content. Implementations must keep them in separate provider message roles.
+        Raises `ProviderError` on any failure."""
+        ...
 
 
 @runtime_checkable
@@ -76,7 +90,9 @@ class IModelRouter(Protocol):
     """Selects the strategy/provider to use for a request, enforcing privacy policy
     and the cost-optimization rule (estimated_cost >= estimated_savings -> skip LLM)."""
 
-    def select(self, request: OptimizationRequest, prompt_type: PromptType) -> IOptimizationStrategy: ...
+    def route(
+        self, request: OptimizationRequest, prompt_type: PromptType, current_tokens: int
+    ) -> RoutingDecision: ...
 
 
 @runtime_checkable

@@ -54,7 +54,11 @@ class OptimizeResult(CamelModel):
     estimated_cost_saved: float
     optimization_mode: OptimizationMode
     confidence: float
+    semantic_similarity: float
+    constraint_preservation: float
     requires_review: bool
+    # Stable codes for what the validator found lost/introduced (e.g. "missing_numbers").
+    review_reasons: list[str] = Field(default_factory=list)
     changes: list[OptimizationChange] = Field(default_factory=list)
 
 
@@ -97,6 +101,7 @@ class SemanticValidationResult(CamelModel):
     semantic_similarity: float = Field(ge=0.0, le=1.0)
     constraint_preservation: float = Field(ge=0.0, le=1.0)
     confidence: float = Field(ge=0.0, le=1.0)
+    issues: list[str] = Field(default_factory=list)
 
 
 # --- /providers, /models -----------------------------------------------------------

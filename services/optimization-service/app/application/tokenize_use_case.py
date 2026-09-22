@@ -1,9 +1,15 @@
-"""Coarse placeholder token estimate (~4 chars/token, a commonly cited rule of thumb
-for English text). Every caller goes through this one function so its Phase 7
-replacement with real per-provider `ITokenizer` implementations
-(docs/architecture/ai-ml.md §3) touches nothing else.
+"""Token counting and cost estimation. Counting is delegated to an injected
+`ITokenizer` (implementations live in packages/tokenizers); results are ESTIMATES and
+the API labels them so — never provider-billed actuals (docs/architecture/ai-ml.md §3).
 """
 
+from optimization_core.interfaces import ITokenizer
 
-def estimate_tokens(text: str) -> int:
-    return max(1, len(text) // 4)
+
+def count_tokens(text: str, tokenizer: ITokenizer) -> int:
+    return tokenizer.count_tokens(text)
+
+
+def estimate_input_cost_usd(tokens: int, price_per_1k_usd: float) -> float:
+    """Estimated input cost for `tokens` at a configured per-1k-token price."""
+    return tokens / 1000 * price_per_1k_usd

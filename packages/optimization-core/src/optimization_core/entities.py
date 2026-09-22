@@ -44,6 +44,8 @@ class SemanticValidationResult:
     semantic_similarity: float
     constraint_preservation: float
     confidence: float
+    # Stable codes explaining a low score (e.g. "missing_numbers"); safe to show and log.
+    issues: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for name, value in (

@@ -30,7 +30,17 @@ export interface OptimizeResult {
   optimizationMode: OptimizationMode;
   /** 0..1 semantic validation confidence. */
   confidence: number;
+  /** 0..1 similarity of task content (ignores politeness/duplicates). */
+  semanticSimilarity: number;
+  /** 0..1 retention of constraints, numbers, identifiers, negations, code, etc. */
+  constraintPreservation: number;
   /** True when confidence is below threshold — UI must not auto-apply. */
   requiresReview: boolean;
+  /**
+   * Stable codes for what the validator found lost or introduced, e.g. "missing_numbers",
+   * "missing_negations", "missing_fenced_code", "introduced_content". Empty when clean.
+   * Map these to user-facing text in the UI; never show raw codes.
+   */
+  reviewReasons: string[];
   changes: OptimizationChange[];
 }

@@ -13,4 +13,6 @@ export interface SemanticValidationResult {
   semanticSimilarity: number;
   constraintPreservation: number;
   confidence: number;
+  /** Same stable reason codes as `OptimizeResult.reviewReasons`. */
+  issues: string[];
 }

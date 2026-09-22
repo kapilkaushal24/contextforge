@@ -5,8 +5,10 @@ WORKDIR /srv
 # optimization-core is a local path dependency (see README) — copy it in before the
 # service itself so Docker layer caching still works when only app/ changes.
 COPY packages/optimization-core /srv/packages/optimization-core
+COPY packages/tokenizers /srv/packages/tokenizers
+COPY packages/provider-adapters /srv/packages/provider-adapters
 COPY services/optimization-service/pyproject.toml /srv/pyproject.toml
-RUN pip install --no-cache-dir /srv/packages/optimization-core \
+RUN pip install --no-cache-dir /srv/packages/optimization-core "/srv/packages/tokenizers[openai]" /srv/packages/provider-adapters \
     && pip install --no-cache-dir -e /srv --no-deps \
     && pip install --no-cache-dir fastapi "uvicorn[standard]" pydantic pydantic-settings
 
