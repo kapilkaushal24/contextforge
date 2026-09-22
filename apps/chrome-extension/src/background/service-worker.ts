@@ -1,5 +1,4 @@
 import type { ExtensionMessage } from "../types/messages.js";
-import { getSettings } from "../services/settings-store.js";
 import { optimizePrompt } from "../services/api-client.js";
 import { setActivePlatform } from "../services/active-platform-store.js";
 
@@ -15,7 +14,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendRe
         text: message.payload.text,
         platform: message.payload.platform,
         mode: message.payload.mode,
-        privacyPolicy: "cloud_allowed",
+        privacyPolicy: message.payload.privacyPolicy,
       })
         .then((result) => {
           sendResponse({ type: "OPTIMIZE_RESPONSE", payload: { ok: true, result } } satisfies ExtensionMessage);
@@ -30,16 +29,6 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, _sender, sendRe
           } satisfies ExtensionMessage);
         });
       return true; // keep the message channel open for the async sendResponse above
-    }
-
-    case "GET_SETTINGS_REQUEST": {
-      getSettings().then((settings) => {
-        sendResponse({
-          type: "GET_SETTINGS_RESPONSE",
-          payload: { defaultMode: settings.defaultMode },
-        } satisfies ExtensionMessage);
-      });
-      return true;
     }
 
     default:

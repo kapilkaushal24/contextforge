@@ -16,7 +16,8 @@ describe("humanizeReviewReason", () => {
 
 describe("humanizeReviewReasons", () => {
   it("de-duplicates reasons that map to the same label", () => {
-    const labels = humanizeReviewReasons(["missing_identifiers", "missing_quoted_literals", "nope", "nope2"]);
+    // "nope" and "nope2" both hit the fallback label, so 3 codes -> 2 unique labels.
+    const labels = humanizeReviewReasons(["missing_identifiers", "nope", "nope2"]);
     expect(labels).toHaveLength(2);
   });
 

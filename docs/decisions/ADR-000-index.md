@@ -11,6 +11,7 @@
 | 007 | Cloud vs. local inference, policy-driven via Model Router | Partly decided in ADR-004 (local inference still future) |
 | 008 | PostgreSQL for durable state + Redis for cache/rate-limit | Proposed |
 | [009](./ADR-009-dynamic-platform-registry.md) | Dynamic platform registry + tab-based auto-detection (replaces the hardcoded platform enum) | Accepted |
+| [010](./ADR-010-proactive-widget-not-submit-interception.md) | Proactive optimization widget, not submit interception | Accepted |
 
 Each ADR follows: **Context → Decision → Alternatives considered → Consequences**.
 New ADRs are added as significant, hard-to-reverse technical decisions are made — not for

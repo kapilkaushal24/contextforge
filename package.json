@@ -11,6 +11,7 @@
     "build:contracts": "npm run build --workspace=@ai-token-optimizer/contracts",
     "build:extension": "npm run build --workspace=@ai-token-optimizer/chrome-extension",
     "dev:extension": "npm run dev --workspace=@ai-token-optimizer/chrome-extension",
-    "typecheck": "npm run typecheck --workspace=@ai-token-optimizer/contracts && npm run typecheck --workspace=@ai-token-optimizer/chrome-extension"
+    "typecheck": "npm run typecheck --workspace=@ai-token-optimizer/contracts && npm run typecheck --workspace=@ai-token-optimizer/chrome-extension",
+    "test:extension": "npm run test --workspace=@ai-token-optimizer/chrome-extension"
   }
 }

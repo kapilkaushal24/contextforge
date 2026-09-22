@@ -32,8 +32,13 @@ starts writing code before the prior phase's docs/interfaces are agreed.
   weighted constraint preservation + content-word similarity + confidence capped on any hard loss),
   shared feature extractor with the LLM safety gate, `reviewReasons` exposed via the API/contracts ✅
   (heuristic and untuned — calibrate with the Phase 13 benchmark)
-- **Phase 10** — Platform adapters (ChatGPT, Claude) — next
-- **Phase 11** — Security/privacy hardening (PII detection, injection tests)
+- **Phase 10** — Platform adapters + optimize-preview UI: `onSubmitIntercept` removed (ADR-010) in
+  favor of a proactive shadow-DOM widget (`content/optimization-widget.ts`) driving a pure,
+  unit-tested state machine (idle/loading/result/applied/error); Apply/Undo are the only paths
+  that call `adapter.setText`; review reasons humanized for display (never raw codes) ✅
+  (widget unverified against the live ChatGPT/Claude DOM — no logged-in browser session
+  available in this environment; load-unpacked-and-test still needed)
+- **Phase 11** — Security/privacy hardening (PII detection, injection tests) — next
 - **Phase 12** — Observability (structured logging, metrics, tracing)
 - **Phase 13** — Testing/evaluation (unit, integration, security, eval harness)
 - **Phase 14** — Docker/deployment (compose, CI)

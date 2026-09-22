@@ -29,8 +29,7 @@ interface IPlatformAdapter {
   matches(url: string): boolean;
   getInputElement(): HTMLElement | null;
   getCurrentText(): string;
-  setText(text: string): void;
-  onSubmitIntercept(cb: (text: string) => Promise<string>): void; // returns text to actually submit
+  setText(text: string): void;             // only ever called from an Apply/Undo click — see §3b/ADR-010
   extractConversationContext?(): string[];  // optional, for context-mode optimization
 }
 ```
@@ -63,11 +62,34 @@ Everything else derives from it:
 Adding a platform is: one entry in `PLATFORM_REGISTRY` + one adapter file. No enum to widen, no
 manifest edit, no backend change (the `Platform` field in the API contract is an open string).
 
+## 3b. Proactive optimization widget (ADR-010)
+
+There is no submit interception — nothing hooks the platform's Send button. Instead:
+
+- `content/optimization-widget.ts` watches the adapter's input element (debounced 400ms) and
+  drives a pure state machine, `content/optimization-widget-state.ts`
+  (`hidden → idle → loading → result → applied`, plus `error`), unit-tested independently of
+  the DOM.
+- **idle**: once the prompt reaches `MIN_WORDS_TO_SHOW` (8) words, a small shadow-DOM pill shows
+  a local, zero-latency `~N tokens` estimate (`services/local-token-estimate.ts`) and an
+  **Optimize** button — the only thing that calls the backend.
+- **result**: shows before/after token counts, reduction %, a review warning (human-readable
+  reasons via `constants/review-reasons.ts`, never the raw API codes) when `requiresReview` is
+  true, the changes made, and the optimized text — with **Apply** and **Keep original** buttons.
+- **applied**: `adapter.setText()` is called — the *only* place that happens — and an **Undo**
+  restores the pre-optimization text via the same call. This is the invariant the state machine
+  exists to enforce; see its file-level comment.
+- **error**: a non-blocking "optimization unavailable" pill, auto-dismissed after 6s; the input
+  is never touched.
+- The widget is rendered inside a closed shadow root (`content/panel.ts`) so host-page CSS can
+  neither affect it nor be affected by it, and all user/API-derived text goes through
+  `textContent`/DOM construction (`content/dom.ts`) — never `innerHTML`.
+
 ## 4. Messaging flow
 
-Content script → `chrome.runtime.sendMessage` → background service worker → backend API →
-response relayed back to content script → rendered in an injected preview UI (shadow DOM to
-avoid CSS collisions with the host page).
+Content script → `chrome.runtime.sendMessage` (`OPTIMIZE_REQUEST`, mode/privacy read from
+`chrome.storage.sync` directly in the content script) → background service worker → backend API
+→ `OPTIMIZE_RESPONSE` relayed back → rendered by the widget above.
 
 ## 5. Permissions (minimum necessary)
 
