@@ -120,10 +120,33 @@ def test_router_cost_rule_skips_short_prompts_and_uses_long_ones() -> None:
 
 
 def test_router_cost_rule_can_be_disabled() -> None:
-    decision = router(cost_optimization_enabled=False).route(request(), PromptType.GENERAL, 10)  # type: ignore[arg-type]
+    decision = router(cost_optimization_enabled=False).route(request(), PromptType.GENERAL, 10)
     assert decision.reason == "llm_selected"
 
 
 def test_router_never_spends_more_than_it_saves() -> None:
     expensive = router(optimizer_input_price_per_1k=1.0)
     assert expensive.route(request(), PromptType.GENERAL, 2000).reason == "cost_exceeds_savings"
+
+
+def test_sensitive_content_blocks_cloud_routing_by_default() -> None:
+    decision = router().route(request(), PromptType.GENERAL, 2000, contains_sensitive_content=True)
+    assert decision.strategy is None
+    assert decision.reason == "sensitive_content_detected"
+
+
+def test_sensitive_content_gate_can_be_disabled_by_policy() -> None:
+    permissive = router(block_pii_from_cloud=False)
+    decision = permissive.route(request(), PromptType.GENERAL, 2000, contains_sensitive_content=True)
+    assert decision.reason == "llm_selected"
+
+
+def test_local_only_privacy_blocks_before_the_sensitive_content_gate_is_even_reached() -> None:
+    local = request(privacy=PrivacyPolicy.LOCAL_ONLY)
+    decision = router().route(local, PromptType.GENERAL, 2000, contains_sensitive_content=True)
+    assert decision.reason == "privacy_local_only"
+
+
+def test_no_sensitive_content_is_unaffected() -> None:
+    decision = router().route(request(), PromptType.GENERAL, 2000, contains_sensitive_content=False)
+    assert decision.reason == "llm_selected"

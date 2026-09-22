@@ -25,6 +25,7 @@ const RESULT: OptimizeResult = {
   requiresReview: false,
   reviewReasons: [],
   changes: [],
+  sensitiveContentCategories: [],
 };
 
 function typed(state: WidgetState, text: string): WidgetState {

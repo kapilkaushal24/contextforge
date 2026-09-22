@@ -10,7 +10,7 @@ COPY packages/provider-adapters /srv/packages/provider-adapters
 COPY services/optimization-service/pyproject.toml /srv/pyproject.toml
 RUN pip install --no-cache-dir /srv/packages/optimization-core "/srv/packages/tokenizers[openai]" /srv/packages/provider-adapters \
     && pip install --no-cache-dir -e /srv --no-deps \
-    && pip install --no-cache-dir fastapi "uvicorn[standard]" pydantic pydantic-settings
+    && pip install --no-cache-dir fastapi "uvicorn[standard]" pydantic pydantic-settings prometheus-client
 
 COPY services/optimization-service/app /srv/app
 

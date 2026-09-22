@@ -11,7 +11,11 @@
   never leave the browser/backend boundary; see Model Router in
   [ai-ml.md](../architecture/ai-ml.md)).
 - PII/sensitive-data detection runs before any cloud LLM call; matches can block cloud routing
-  per policy.
+  per policy. Implemented (Phase 11, ADR-011): `optimization_core.pii.detect_pii` (local,
+  deterministic — email, phone, SSN, credit card, API key) feeds `ModelRouter`'s
+  `contains_sensitive_content` gate, controlled by `RouterPolicy.block_pii_from_cloud`
+  (`AITO_BLOCK_PII_FROM_CLOUD`, default on). Detected categories are reported in the API
+  response (`sensitiveContentCategories`) — never the matched text.
 
 ## 2. Transport & storage security
 
@@ -33,7 +37,13 @@ Four-zone trust boundary (system instructions / optimizer policy / user content 
 context) enforced at the optimizer core — detailed in
 [ai-ml.md §7](../architecture/ai-ml.md#7-prompt-injection-boundary). User/external content is
 always treated as data to transform, never as instructions to the optimizer, the provider
-client, or any tool-calling logic.
+client, or any tool-calling logic. A hijacked/compromised provider's *output* is equally
+untrusted: `optimization_core.safety.missing_critical_content` rejects a rewrite that is
+either missing critical content or off-topic (`topic_drift`) relative to the original, and
+`HeuristicSemanticValidator` scores an off-topic result as low-confidence for the same
+reason — see ADR-011 for the specific gap a battery of injection payloads found and fixed,
+and `tests/security/test_prompt_injection_api.py` / `optimization-core`'s
+`tests/test_prompt_injection.py` for the regression coverage.
 
 ## 5. Application security controls
 

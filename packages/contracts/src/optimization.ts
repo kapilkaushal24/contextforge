@@ -43,4 +43,11 @@ export interface OptimizeResult {
    */
   reviewReasons: string[];
   changes: OptimizationChange[];
+  /**
+   * Sensitive-content categories detected in the original text (e.g. "email",
+   * "api_key", "credit_card") — never the matched text itself. Empty if none found.
+   * A non-empty list means cloud LLM optimization was skipped for this request even
+   * if otherwise enabled/allowed (see the backend's ModelRouter PII gate).
+   */
+  sensitiveContentCategories: string[];
 }

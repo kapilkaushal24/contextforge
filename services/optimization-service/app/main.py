@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -11,11 +11,13 @@ from app.api.errors import (
     ApiException,
     api_exception_handler,
     http_exception_handler,
+    unhandled_exception_handler,
     validation_exception_handler,
 )
 from app.api.v1.router import router as v1_router
 from app.config.settings import get_settings
 from app.observability.logging import configure_logging
+from app.observability.metrics import METRICS_CONTENT_TYPE, render_metrics
 from app.observability.middleware import RequestIdMiddleware
 
 
@@ -48,12 +50,19 @@ def create_app() -> FastAPI:
     app.add_exception_handler(ApiException, api_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(Exception, unhandled_exception_handler)
 
     app.include_router(v1_router)
 
     @app.get("/healthz", tags=["health"])
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/metrics", tags=["observability"])
+    async def metrics() -> Response:
+        # Outside /api/v1 and never gated by the API key (§12: monitoring/scraping
+        # needs its own network-level access control, not the app's request auth).
+        return Response(content=render_metrics(), media_type=METRICS_CONTENT_TYPE)
 
     return app
 

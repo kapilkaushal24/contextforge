@@ -69,6 +69,15 @@ export const PANEL_STYLES = `
     margin-bottom: 8px;
   }
 
+  .notice {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
   .changes { margin: 0 0 8px 0; padding-left: 18px; color: #4b5563; }
   .changes li { margin-bottom: 2px; }
 

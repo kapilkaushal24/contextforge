@@ -4,9 +4,9 @@ Chrome extension + backend service that estimates and reduces token usage in pro
 AI chat tools, while preserving user intent — privacy-first, provider-agnostic, built to grow
 into an enterprise product.
 
-**Status:** Phases 0–10 complete — planning docs, shared contracts, a buildable Chrome extension
+**Status:** Phases 0–12 complete — planning docs, shared contracts, a buildable Chrome extension
 shell (with dynamic AI-platform detection, ADR-009), and a FastAPI backend with deterministic optimization.
-Security/privacy hardening (Phase 11) is next. See
+Testing/evaluation (Phase 13) is next. See
 [docs/product/development-phases.md](docs/product/development-phases.md).
 
 ## Quick start

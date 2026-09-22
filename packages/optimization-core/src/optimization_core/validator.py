@@ -13,7 +13,12 @@ reasons for any loss.
   politeness/function words — so removing "could you please" or a duplicate sentence is
   free, while dropping real topic words is not.
 - confidence: 0.6 * constraint + 0.4 * similarity, capped at 0.5 whenever any hard item
-  was lost — so a dropped "not" or number can never be waved through by high word overlap.
+  was lost — so a dropped "not" or number can never be waved through by high word overlap
+  — and capped again, lower, when similarity itself is very low (`topic_drift`): a short
+  reply about something else entirely can have *no* hard/soft markers to lose (nothing to
+  compare), which would otherwise leave constraint_preservation at a vacuous 1.0 and let
+  an off-topic rewrite (e.g. a hijacked LLM output) score deceptively high. See
+  tests/security/test_prompt_injection_api.py for the scenario this closes.
 """
 
 from __future__ import annotations
@@ -29,6 +34,9 @@ _BETA_SQUARED = 4.0  # recall counts 4x precision: losing content is worse than 
 _MIN_HARD_LOSS_CAP = 0.5
 _INTRODUCED_PENALTY_EACH = 0.1
 _INTRODUCED_PENALTY_MAX = 0.4
+_TOPIC_DRIFT_SIMILARITY_THRESHOLD = 0.2
+_TOPIC_DRIFT_CAP = 0.3
+_MIN_ORIGINAL_CONTENT_WORDS_FOR_DRIFT_CHECK = 3
 
 
 def _lost(items: Iterable[str], present: Callable[[str], bool]) -> list[str]:
@@ -49,6 +57,12 @@ class HeuristicSemanticValidator:
         confidence = 0.6 * constraint + 0.4 * similarity
         if hard_lost:
             confidence = min(confidence, _MIN_HARD_LOSS_CAP)
+        if (
+            len(o.content_words) >= _MIN_ORIGINAL_CONTENT_WORDS_FOR_DRIFT_CHECK
+            and similarity < _TOPIC_DRIFT_SIMILARITY_THRESHOLD
+        ):
+            issues.append("topic_drift")
+            confidence = min(confidence, _TOPIC_DRIFT_CAP)
         return SemanticValidationResult(
             semantic_similarity=similarity,
             constraint_preservation=constraint,

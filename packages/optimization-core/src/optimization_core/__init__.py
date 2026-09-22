@@ -26,6 +26,7 @@ from optimization_core.interfaces import (
     ITokenizer,
     RoutingDecision,
 )
+from optimization_core.pii import PiiMatch, detect_pii
 from optimization_core.router import ModelRouter, RouterPolicy
 from optimization_core.validator import HeuristicSemanticValidator
 
@@ -46,6 +47,7 @@ __all__ = [
     "OptimizationMode",
     "OptimizationRequest",
     "OptimizationResult",
+    "PiiMatch",
     "Platform",
     "PrivacyPolicy",
     "PromptType",
@@ -55,4 +57,5 @@ __all__ = [
     "RuleBasedContentAnalyzer",
     "SemanticValidationResult",
     "TokenizerProvider",
+    "detect_pii",
 ]
