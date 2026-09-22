@@ -68,6 +68,9 @@ class OptimizationResult:
     requires_review: bool
     changes: tuple[OptimizationChange, ...] = field(default_factory=tuple)
     estimated_cost_saved: float = 0.0
+    # Categories from optimization_core.pii.detect_pii found in the original text
+    # (e.g. "email", "api_key"). Informational — never the matched text itself.
+    sensitive_categories: tuple[str, ...] = ()
 
     @property
     def tokens_saved(self) -> int:

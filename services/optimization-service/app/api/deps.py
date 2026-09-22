@@ -62,6 +62,7 @@ def get_model_router() -> ModelRouter:
             optimizer_input_price_per_1k=settings.llm_input_price_per_1k_usd,
             optimizer_output_price_per_1k=settings.llm_output_price_per_1k_usd,
             downstream_input_price_per_1k=settings.input_price_per_1k_usd,
+            block_pii_from_cloud=settings.block_pii_from_cloud,
         ),
     )
 

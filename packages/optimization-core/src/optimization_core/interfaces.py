@@ -87,11 +87,17 @@ class IAIProvider(Protocol):
 
 @runtime_checkable
 class IModelRouter(Protocol):
-    """Selects the strategy/provider to use for a request, enforcing privacy policy
-    and the cost-optimization rule (estimated_cost >= estimated_savings -> skip LLM)."""
+    """Selects the strategy/provider to use for a request, enforcing privacy policy,
+    detected sensitive content, and the cost-optimization rule (estimated_cost >=
+    estimated_savings -> skip LLM)."""
 
     def route(
-        self, request: OptimizationRequest, prompt_type: PromptType, current_tokens: int
+        self,
+        request: OptimizationRequest,
+        prompt_type: PromptType,
+        current_tokens: int,
+        *,
+        contains_sensitive_content: bool = False,
     ) -> RoutingDecision: ...
 
 

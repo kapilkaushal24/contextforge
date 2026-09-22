@@ -38,9 +38,21 @@ starts writing code before the prior phase's docs/interfaces are agreed.
   that call `adapter.setText`; review reasons humanized for display (never raw codes) ✅
   (widget unverified against the live ChatGPT/Claude DOM — no logged-in browser session
   available in this environment; load-unpacked-and-test still needed)
-- **Phase 11** — Security/privacy hardening (PII detection, injection tests) — next
-- **Phase 12** — Observability (structured logging, metrics, tracing)
-- **Phase 13** — Testing/evaluation (unit, integration, security, eval harness)
+- **Phase 11** — Security/privacy hardening: local PII/secrets detection
+  (`optimization_core.pii`) blocks cloud LLM routing by default (ADR-011); a
+  prompt-injection payload battery found and fixed two real gaps (the LLM safety gate
+  and the semantic validator both let an off-topic hijacked reply through when the
+  original had no hard-content markers to lose — both now check topical overlap);
+  dedicated `tests/security/` suite (API-key auth, payload-limit boundaries, PII
+  routing, injection battery against the live API) ✅
+- **Phase 12** — Observability (ADR-012): Prometheus metrics at `GET /metrics`
+  (`optimize_requests_total`, `optimize_latency_seconds`, `token_reduction_percentage`,
+  `semantic_validation_failures_total`, `llm_requests_total`, `llm_latency_seconds`) —
+  every one wired to a real signal, none fabricated (`cache_hit_rate` explicitly skipped,
+  no cache exists yet); per-stage pipeline timing as structured, request-ID-correlated log
+  lines in place of a full tracing backend; closed a real gap — added a catch-all exception
+  handler so an unexpected bug returns the standard error envelope, not a leaked traceback ✅
+- **Phase 13** — Testing/evaluation (unit, integration, security, eval harness) — next
 - **Phase 14** — Docker/deployment (compose, CI)
 - **Phase 15** — Enterprise features (orgs/teams/RBAC/policies/analytics) — post-MVP
 

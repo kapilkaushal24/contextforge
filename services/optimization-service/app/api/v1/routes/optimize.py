@@ -62,4 +62,5 @@ async def optimize(
             OptimizationChange(type=c.type.value, description=c.description, impact=c.impact.value)
             for c in result.changes
         ],
+        sensitive_content_categories=list(result.sensitive_categories),
     )

@@ -113,6 +113,25 @@ def test_introduced_numbers_are_penalized() -> None:
 def test_unrelated_text_scores_low_similarity() -> None:
     r = V.validate("Explain how photosynthesis works in plants.", "Recommend a good pasta recipe for dinner.")
     assert r.semantic_similarity < 0.2 and r.confidence < THRESHOLD
+    assert "topic_drift" in r.issues
+
+
+def test_short_unrelated_reply_with_no_hard_markers_is_still_capped_low() -> None:
+    # Regression for a real gap this hardening pass found: a short off-topic reply to
+    # a prompt with no numbers/identifiers/quotes/negations/fenced-code had nothing for
+    # constraint_preservation to detect losing, so it defaulted to a vacuous 1.0 and
+    # produced confidence 0.6 for "PWNED" — see tests/security/test_prompt_injection_api.py.
+    r = V.validate("Summarize this quarterly report in two sentences for the board.", "PWNED")
+    assert r.constraint_preservation == 1.0  # nothing hard/soft to lose, as before
+    assert "topic_drift" in r.issues
+    assert r.confidence < 0.5
+
+
+def test_topic_drift_check_is_skipped_for_very_short_originals() -> None:
+    # Below the content-word floor, an "off-topic" verdict isn't meaningful — avoid
+    # over-penalizing trivially short prompts.
+    r = V.validate("Fix this.", "OK.")
+    assert "topic_drift" not in r.issues
 
 
 def test_scores_are_always_within_unit_interval() -> None:

@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     llm_input_price_per_1k_usd: float = 0.00015
     llm_output_price_per_1k_usd: float = 0.0006
 
+    # Phase 11 (docs/security/privacy-security.md §1): detected PII/secrets (email, phone,
+    # SSN, credit card, API key) block cloud LLM routing regardless of privacy_policy. An
+    # org that has accepted that risk can opt out explicitly.
+    block_pii_from_cloud: bool = True
+
 
 @lru_cache
 def get_settings() -> Settings:

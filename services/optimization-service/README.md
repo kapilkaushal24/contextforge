@@ -17,6 +17,14 @@ Any LLM failure or unsafe rewrite falls back to the deterministic result.
 `requiresReview` and `reviewReasons`; `/validate` scores any original/optimized pair. A dropped
 negation, number, identifier, quote or code block caps confidence at 0.5, forcing review.
 `/analyze` does rule-based code-vs-general detection; its redundancy signal is still a placeholder.
+**Security hardening (Phase 11, ADR-011):** `optimization_core.pii.detect_pii` (local,
+deterministic — email/phone/SSN/credit-card/API-key) blocks cloud LLM routing by default
+regardless of `privacyPolicy` (`AITO_BLOCK_PII_FROM_CLOUD`); detected categories are reported in
+`sensitiveContentCategories`, never the matched text. A prompt-injection payload battery
+(`tests/security/`) found and fixed two real defects: the LLM safety gate and the semantic
+validator both let an unrelated hijacked reply through when the original prompt had no
+numbers/identifiers/quotes/negations to lose — both now also check topical overlap
+(`topic_drift`).
 
 ## Layering
 
@@ -47,6 +55,13 @@ Interactive API docs: http://localhost:8000/docs
 
 Copy `.env.example` to `.env` and adjust. Nothing is hard-coded (§31) — see
 `app/config/settings.py`. `AITO_REQUIRE_API_KEY` is `false` by default for local dev.
+
+**Observability (Phase 12, ADR-012):** `GET /metrics` (Prometheus text format, not gated by
+the API key) exposes request counts/latency by mode, token-reduction distribution, semantic-
+validation-failure counts, and LLM call counts/latency. Each `/optimize` request also logs one
+structured, request-ID-correlated line with per-stage timings (deterministic/structural/llm/
+validation) — a lightweight substitute for a full tracing backend, see ADR-012 for why. Any
+unexpected exception now returns the standard error envelope instead of a raw traceback.
 
 ## Not yet implemented
 

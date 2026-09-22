@@ -12,6 +12,8 @@
 | 008 | PostgreSQL for durable state + Redis for cache/rate-limit | Proposed |
 | [009](./ADR-009-dynamic-platform-registry.md) | Dynamic platform registry + tab-based auto-detection (replaces the hardcoded platform enum) | Accepted |
 | [010](./ADR-010-proactive-widget-not-submit-interception.md) | Proactive optimization widget, not submit interception | Accepted |
+| [011](./ADR-011-pii-detection-and-injection-hardening.md) | PII detection gate + prompt-injection hardening | Accepted |
+| [012](./ADR-012-observability-scope.md) | Observability scope: Prometheus metrics + log-correlated timing, no tracing backend | Accepted |
 
 Each ADR follows: **Context → Decision → Alternatives considered → Consequences**.
 New ADRs are added as significant, hard-to-reverse technical decisions are made — not for

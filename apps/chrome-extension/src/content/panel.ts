@@ -1,4 +1,5 @@
 import { humanizeReviewReasons } from "../constants/review-reasons.js";
+import { humanizeSensitiveCategories } from "../constants/sensitive-categories.js";
 import { estimateTokensLocally } from "../services/local-token-estimate.js";
 import { button, closeButton, el } from "./dom.js";
 import type { WidgetState } from "./optimization-widget-state.js";
@@ -120,6 +121,15 @@ export class OptimizationPanel {
         )
       : undefined;
 
+    const sensitiveNotice =
+      result.sensitiveContentCategories.length > 0
+        ? el(
+            "div",
+            "notice",
+            `Detected ${humanizeSensitiveCategories(result.sensitiveContentCategories).join(", ")} — kept processing locally.`,
+          )
+        : undefined;
+
     const changes =
       result.changes.length > 0
         ? el(
@@ -138,7 +148,7 @@ export class OptimizationPanel {
       button("btn-secondary", "Keep original", this.handlers.onReject),
     );
 
-    const body = el("div", "body", header, stats, warning, changes, preview, actions);
+    const body = el("div", "body", header, stats, warning, sensitiveNotice, changes, preview, actions);
     return el("div", "card", body);
   }
 

@@ -60,6 +60,11 @@ class OptimizeResult(CamelModel):
     # Stable codes for what the validator found lost/introduced (e.g. "missing_numbers").
     review_reasons: list[str] = Field(default_factory=list)
     changes: list[OptimizationChange] = Field(default_factory=list)
+    # Categories detected by optimization_core.pii.detect_pii in the original text
+    # (e.g. "email", "api_key") — never the matched text itself. Empty if none found.
+    # A non-empty list plus cloud LLM optimization being enabled means the LLM step was
+    # skipped for this request regardless of the requested privacy policy.
+    sensitive_content_categories: list[str] = Field(default_factory=list)
 
 
 # --- /analyze ------------------------------------------------------------------
