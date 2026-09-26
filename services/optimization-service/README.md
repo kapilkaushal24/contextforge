@@ -63,10 +63,37 @@ structured, request-ID-correlated line with per-stage timings (deterministic/str
 validation) — a lightweight substitute for a full tracing backend, see ADR-012 for why. Any
 unexpected exception now returns the standard error envelope instead of a raw traceback.
 
+**Testing/evaluation (Phase 13):** 100% line coverage (`pytest --cov=app`) — closed gaps that
+had zero coverage until now: `/analyze`'s error path, `/feedback`, `/providers`, `/models`,
+`/settings`, `/usage`, and the composition root's real-provider registration/shutdown path.
+See [ml/evaluation](../../ml/evaluation) for the benchmark dataset, live-report script, and
+the in-process regression test (`tests/evaluation/`) that runs the same dataset in CI.
+
 ## Not yet implemented
 
 - A real redundancy signal for `/analyze` (currently always `false`).
-- Validator calibration: weights and the 0.85 threshold are untuned heuristics (Phase 13).
+- Validator calibration: weights and the 0.85 threshold are untuned heuristics — the eval
+  harness (`ml/evaluation/`) is the tool to calibrate them against, not yet used for that.
 - Live-key verification of the OpenAI/Anthropic adapters (tested against mocked transports only).
 - Database/Redis (no persistence needed yet — settings are in-memory, usage stats are zeroed).
 - `/providers` and `/models` still honestly return empty lists rather than fabricated data.
+- The image is not yet pushed anywhere or deployed — `docker-build` in CI only validates it builds.
+- Security scanning (`pip-audit`, `bandit`, `npm audit`) runs in CI but is informational, not a
+  merge gate yet (ADR-013) — no triage process exists for findings.
+- CI has not yet run on a real GitHub Actions runner — every job's commands were verified locally
+  in a freshly created, isolated venv/npm install, which is the closest local proxy (ADR-013).
+
+## CI/CD & Docker (Phase 14, ADR-013)
+
+`.github/workflows/ci.yml` runs one job per package (`extension`, `optimization-core` —
+matrix-tested on Python 3.12 and 3.14 —, `tokenizers`, `provider-adapters`,
+`optimization-service` with `--cov-fail-under=95`, `security-scan`, `docker-build`) on every
+push/PR. The Docker image (`python:3.14-slim`) runs as a non-root user and declares a
+`HEALTHCHECK` against `/healthz`:
+
+```bash
+docker compose build
+docker compose up -d
+curl http://localhost:8000/healthz
+docker compose down
+```

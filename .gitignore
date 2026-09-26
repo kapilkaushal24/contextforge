@@ -11,6 +11,10 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
+.coverage
+
+# Eval harness run output (regenerated per run; the dataset itself is tracked)
+ml/evaluation/results/*.json
 
 # Env / secrets
 .env

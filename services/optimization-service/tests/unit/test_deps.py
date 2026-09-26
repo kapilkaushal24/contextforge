@@ -3,7 +3,8 @@ from aito_providers import AnthropicProvider, OpenAIProvider
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
-from app.api.deps import build_provider, get_model_router
+import app.api.deps as deps_module
+from app.api.deps import build_provider, close_providers, get_model_router
 from app.config.settings import Settings
 from app.main import create_app
 
@@ -40,3 +41,53 @@ def test_app_shutdown_closes_providers_and_resets_router_cache() -> None:
     with TestClient(create_app()):
         pass
     assert get_model_router.cache_info().currsize == 0
+
+
+async def test_close_providers_calls_aclose_on_every_registered_provider() -> None:
+    class RecordingProvider:
+        provider_id = "recording"
+
+        def __init__(self) -> None:
+            self.closed = False
+
+        async def complete(self, *, system: str, user: str, max_tokens: int) -> str:
+            return ""
+
+        async def aclose(self) -> None:
+            self.closed = True
+
+    fake = RecordingProvider()
+    deps_module._open_providers.append(fake)
+    try:
+        await close_providers()
+        assert fake.closed is True
+        assert deps_module._open_providers == []
+    finally:
+        if fake in deps_module._open_providers:
+            deps_module._open_providers.remove(fake)
+
+
+def test_get_model_router_registers_a_real_provider_for_close_on_shutdown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # get_model_router() calls the module-level get_settings() directly (not via
+    # FastAPI's Depends), so exercising the "LLM enabled" composition-root path means
+    # patching that reference rather than using app.dependency_overrides.
+    llm_settings = Settings(
+        _env_file=None,  # type: ignore[call-arg]
+        enable_llm_optimization=True,
+        llm_api_key=SecretStr("k"),
+        llm_provider="openai",
+    )
+    monkeypatch.setattr(deps_module, "get_settings", lambda: llm_settings)
+    get_model_router.cache_clear()
+    before = list(deps_module._open_providers)
+
+    try:
+        router = get_model_router()
+        assert len(deps_module._open_providers) == len(before) + 1
+        assert router is not None
+    finally:
+        for provider in deps_module._open_providers[len(before) :]:
+            deps_module._open_providers.remove(provider)
+        get_model_router.cache_clear()

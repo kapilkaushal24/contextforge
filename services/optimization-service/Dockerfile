@@ -1,4 +1,4 @@
-FROM python:3.12-slim AS base
+FROM python:3.14-slim AS base
 
 WORKDIR /srv
 
@@ -14,5 +14,16 @@ RUN pip install --no-cache-dir /srv/packages/optimization-core "/srv/packages/to
 
 COPY services/optimization-service/app /srv/app
 
+# Runs as a non-root user (§12 security principle) — the image needs no write access
+# to anything outside its own process, so there's no reason to run as root.
+RUN useradd --no-create-home --shell /usr/sbin/nologin appuser
+USER appuser
+
 EXPOSE 8000
+
+# No curl in the slim base image (and installing it would add a layer just for this) —
+# a one-line Python request against the unauthenticated /healthz route is enough.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)" || exit 1
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

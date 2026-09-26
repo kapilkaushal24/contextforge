@@ -1,0 +1,23 @@
+# Keeps the Docker build context small and avoids ever baking local venvs / node_modules
+# / secrets into an image layer.
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.git/
+.github/
+docs/
+ml/evaluation/results/
+*.md
+.env
+.env.*
+!.env.example

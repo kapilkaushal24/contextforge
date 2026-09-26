@@ -10,10 +10,6 @@ from aito_providers import AnthropicProvider, OpenAIProvider
 SECRET = "sk-super-secret"
 
 
-def client(handler: httpx.MockTransport | None = None, **kwargs: object) -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=handler or httpx.MockTransport(lambda r: httpx.Response(200)))
-
-
 def mock(status: int = 200, payload: object = None, exc: Exception | None = None):  # type: ignore[no-untyped-def]
     seen: list[httpx.Request] = []
 
@@ -24,6 +20,13 @@ def mock(status: int = 200, payload: object = None, exc: Exception | None = None
         return httpx.Response(status, json=payload)
 
     return httpx.AsyncClient(transport=httpx.MockTransport(handler)), seen
+
+
+def mock_raw_body(status: int, body: bytes) -> httpx.AsyncClient:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, content=body)
+
+    return httpx.AsyncClient(transport=httpx.MockTransport(handler))
 
 
 async def test_openai_sends_system_and_user_in_separate_roles() -> None:
@@ -84,3 +87,27 @@ async def test_malformed_responses_become_provider_error(cls, payload) -> None: 
     http, _ = mock(payload=payload)
     with pytest.raises(ProviderError):
         await cls(SECRET, "m", client=http).complete(system="s", user="u", max_tokens=5)
+
+
+@pytest.mark.parametrize("cls", [OpenAIProvider, AnthropicProvider])
+async def test_2xx_response_with_non_json_body_becomes_provider_error(cls) -> None:  # type: ignore[no-untyped-def]
+    http = mock_raw_body(200, b"<html>not json</html>")
+    with pytest.raises(ProviderError, match="invalid JSON"):
+        await cls(SECRET, "m", client=http).complete(system="s", user="u", max_tokens=5)
+
+
+async def test_openai_non_string_content_becomes_provider_error() -> None:
+    # Content present and well-formed but not text (e.g. a tool-call/array shape) must
+    # not be silently coerced — the caller expects a plain string.
+    http, _ = mock(payload={"choices": [{"message": {"content": ["not", "a", "string"]}}]})
+    with pytest.raises(ProviderError, match="not text"):
+        await OpenAIProvider(SECRET, "m", client=http).complete(system="s", user="u", max_tokens=5)
+
+
+@pytest.mark.parametrize("cls", [OpenAIProvider, AnthropicProvider])
+async def test_aclose_closes_the_underlying_http_client(cls) -> None:  # type: ignore[no-untyped-def]
+    http, _ = mock(payload={})
+    provider = cls(SECRET, "m", client=http)
+    assert http.is_closed is False
+    await provider.aclose()
+    assert http.is_closed is True

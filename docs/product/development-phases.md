@@ -52,8 +52,28 @@ starts writing code before the prior phase's docs/interfaces are agreed.
   no cache exists yet); per-stage pipeline timing as structured, request-ID-correlated log
   lines in place of a full tracing backend; closed a real gap — added a catch-all exception
   handler so an unexpected bug returns the standard error envelope, not a leaked traceback ✅
-- **Phase 13** — Testing/evaluation (unit, integration, security, eval harness) — next
-- **Phase 14** — Docker/deployment (compose, CI)
+- **Phase 13** — Testing/evaluation: closed real coverage gaps found by running actual
+  coverage reports (not guessing) — `provider-adapters` was 93% (untested `aclose()`,
+  non-JSON-2xx-response, and non-string-content branches), the backend was 95% (five
+  routes — `/analyze`'s error path, `/feedback`, `/providers`, `/models`, `/settings`,
+  `/usage` — and the composition root's real-provider registration path had zero test
+  coverage). Both packages are now at 100% line coverage. Added `ml/evaluation/`: a
+  17-prompt benchmark dataset across 7 categories, a zero-dependency live-report script
+  (`run_eval.py`), and a CI-friendly in-process regression test
+  (`tests/evaluation/test_benchmark_regression.py`) asserting aggregate bounds (minimum
+  reduction, no unexpected `requires_review`, baseline prompts never shrunk, latency
+  ceiling). Building the dataset itself found two real, documented behavioral quirks —
+  see [ml/evaluation/README.md](../../ml/evaluation/README.md) ✅
+- **Phase 14** — Docker/deployment + CI (ADR-013): migrated to Python 3.14 / Node 24
+  (every package's `.venv` recreated from scratch, full test/type/lint suites re-verified,
+  `requires-python = ">=3.12"` matrix-tested against both ends); `.github/workflows/ci.yml`
+  with one job per package, every command verified locally in a fresh isolated venv/npm
+  install first (caught a real `working-directory` path bug before it could reach a real
+  runner); Docker image now runs as non-root with a `HEALTHCHECK`, verified end-to-end
+  (`docker build` + `docker run` + `docker compose up`/`down`, confirmed healthy and
+  non-root); `pip-audit`/`bandit`/`npm audit` all clean, wired as informational (not yet a
+  merge gate — see ADR-013) ✅ (the workflow has not yet run on a real GitHub Actions
+  runner — only verified by replicating each job's exact commands locally)
 - **Phase 15** — Enterprise features (orgs/teams/RBAC/policies/analytics) — post-MVP
 
 This batch delivers Phases 0–2 plus the enterprise-readiness documents (ERD, ADRs, API
