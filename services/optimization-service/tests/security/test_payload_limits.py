@@ -36,7 +36,12 @@ def test_max_length_text_is_accepted(client: TestClient) -> None:
 def test_empty_text_is_rejected(client: TestClient) -> None:
     response = client.post(
         "/api/v1/optimize",
-        json={"text": "", "platform": "chatgpt", "mode": "balanced", "privacyPolicy": "cloud_allowed"},
+        json={
+            "text": "",
+            "platform": "chatgpt",
+            "mode": "balanced",
+            "privacyPolicy": "cloud_allowed",
+        },
     )
     assert response.status_code == 422
 
@@ -71,7 +76,12 @@ def test_malformed_json_is_rejected_not_500(client: TestClient) -> None:
 def test_wrong_type_for_a_field_is_rejected(client: TestClient) -> None:
     response = client.post(
         "/api/v1/optimize",
-        json={"text": 12345, "platform": "chatgpt", "mode": "balanced", "privacyPolicy": "cloud_allowed"},
+        json={
+            "text": 12345,
+            "platform": "chatgpt",
+            "mode": "balanced",
+            "privacyPolicy": "cloud_allowed",
+        },
     )
     assert response.status_code == 422
 

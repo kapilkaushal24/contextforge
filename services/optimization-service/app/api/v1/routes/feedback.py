@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 async def submit_feedback(payload: FeedbackRequest) -> FeedbackAck:
     logger.info(
         "feedback received",
-        extra={"request_id": payload.request_id, "rating": payload.rating, "reason": payload.reason},
+        extra={
+            "request_id": payload.request_id,
+            "rating": payload.rating,
+            "reason": payload.reason,
+        },
     )
     return FeedbackAck(accepted=True)

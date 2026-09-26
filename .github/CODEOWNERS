@@ -1,0 +1,6 @@
+# Code owners — required reviewers when branch protection has "Require review from
+# Code Owners" enabled (see docs/security/branch-protection.md). Every file in the repo
+# falls back to the repo owner; add more specific owners/teams below as the project
+# grows past a single maintainer.
+
+* @kapilkaushal24

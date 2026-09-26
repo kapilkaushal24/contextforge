@@ -26,7 +26,11 @@ from optimization_core.enums import OptimizationMode, PrivacyPolicy, TokenizerPr
 from app.application.optimize_use_case import run_optimization
 
 DATASET_PATH = (
-    Path(__file__).resolve().parents[4] / "ml" / "evaluation" / "datasets" / "benchmark_prompts.jsonl"
+    Path(__file__).resolve().parents[4]
+    / "ml"
+    / "evaluation"
+    / "datasets"
+    / "benchmark_prompts.jsonl"
 )
 
 TOKENIZER = HeuristicTokenizer(TokenizerProvider.GENERIC)
@@ -39,7 +43,11 @@ MAX_LATENCY_MS_PER_PROMPT = 1000.0
 
 def load_dataset() -> list[dict[str, Any]]:
     assert DATASET_PATH.exists(), f"benchmark dataset not found at {DATASET_PATH}"
-    return [json.loads(line) for line in DATASET_PATH.read_text(encoding="utf-8").splitlines() if line.strip()]
+    return [
+        json.loads(line)
+        for line in DATASET_PATH.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 DATASET = load_dataset()
@@ -81,7 +89,8 @@ def test_dataset_is_not_empty() -> None:
 def test_no_prompt_errors_or_times_out(results: list[dict[str, Any]]) -> None:
     for item in results:
         assert item["latency_ms"] < MAX_LATENCY_MS_PER_PROMPT, (
-            f"{item['entry']['id']} took {item['latency_ms']:.0f}ms (ceiling {MAX_LATENCY_MS_PER_PROMPT}ms)"
+            f"{item['entry']['id']} took {item['latency_ms']:.0f}ms "
+            f"(ceiling {MAX_LATENCY_MS_PER_PROMPT}ms)"
         )
 
 
@@ -98,7 +107,9 @@ def test_baseline_prompts_are_never_shrunk(results: list[dict[str, Any]]) -> Non
         )
 
 
-def test_reducible_prompts_achieve_meaningful_average_reduction(results: list[dict[str, Any]]) -> None:
+def test_reducible_prompts_achieve_meaningful_average_reduction(
+    results: list[dict[str, Any]],
+) -> None:
     reducible = [r for r in results if r["entry"]["expect_reduction"]]
     assert reducible, "dataset should include at least one reducible prompt"
     avg = sum(r["result"].reduction_percentage for r in reducible) / len(reducible)
@@ -111,7 +122,9 @@ def test_reducible_prompts_achieve_meaningful_average_reduction(results: list[di
 
 def test_every_reducible_prompt_shrinks_at_least_a_little(results: list[dict[str, Any]]) -> None:
     reducible = [r for r in results if r["entry"]["expect_reduction"]]
-    zero_reduction = [r["entry"]["id"] for r in reducible if r["result"].reduction_percentage <= 0.0]
+    zero_reduction = [
+        r["entry"]["id"] for r in reducible if r["result"].reduction_percentage <= 0.0
+    ]
     assert zero_reduction == [], f"expected some reduction but got none for: {zero_reduction}"
 
 
@@ -122,7 +135,9 @@ def test_no_prompt_is_unexpectedly_flagged_for_review(results: list[dict[str, An
     assert flagged == [], f"unexpectedly flagged for review: {flagged}"
 
 
-def test_fenced_code_survives_verbatim_in_code_and_sql_categories(results: list[dict[str, Any]]) -> None:
+def test_fenced_code_survives_verbatim_in_code_and_sql_categories(
+    results: list[dict[str, Any]],
+) -> None:
     for item in results:
         if item["entry"]["category"] in ("coding", "sql") and "```" in item["entry"]["text"]:
             original_blocks = item["entry"]["text"].split("```")[1::2]

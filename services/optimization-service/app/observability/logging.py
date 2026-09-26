@@ -8,7 +8,10 @@ from typing import Any
 
 # Attributes every LogRecord carries regardless of `extra=` — anything else passed via
 # `extra={...}` is a caller-supplied structured field and gets surfaced verbatim below.
-_STANDARD_RECORD_ATTRS = frozenset(logging.LogRecord("", 0, "", 0, "", (), None).__dict__) | {"message", "asctime"}
+_STANDARD_RECORD_ATTRS = frozenset(logging.LogRecord("", 0, "", 0, "", (), None).__dict__) | {
+    "message",
+    "asctime",
+}
 
 
 class JsonFormatter(logging.Formatter):

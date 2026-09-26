@@ -1,0 +1,39 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /packages/optimization-core
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: pip
+    directory: /packages/tokenizers
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: pip
+    directory: /packages/provider-adapters
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: pip
+    directory: /services/optimization-service
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /services/optimization-service
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

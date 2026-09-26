@@ -31,7 +31,9 @@ def test_optimization_request_rejects_oversized_text() -> None:
 
 def test_semantic_validation_result_rejects_out_of_range_score() -> None:
     with pytest.raises(ValueError):
-        SemanticValidationResult(semantic_similarity=1.5, constraint_preservation=0.9, confidence=0.9)
+        SemanticValidationResult(
+            semantic_similarity=1.5, constraint_preservation=0.9, confidence=0.9
+        )
 
 
 def test_optimization_result_computes_derived_fields() -> None:

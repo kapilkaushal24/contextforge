@@ -38,7 +38,9 @@ def test_feedback_is_accepted(client: TestClient) -> None:
 
 
 def test_feedback_without_optional_reason(client: TestClient) -> None:
-    response = client.post("/api/v1/feedback", json={"requestId": "req-124", "rating": "not_helpful"})
+    response = client.post(
+        "/api/v1/feedback", json={"requestId": "req-124", "rating": "not_helpful"}
+    )
     assert response.status_code == 202
 
 
@@ -94,7 +96,9 @@ def test_usage_defaults_to_last_seven_days_and_zeroed_summary(client: TestClient
 
 
 def test_usage_accepts_explicit_date_range(client: TestClient) -> None:
-    response = client.get("/api/v1/usage", params={"range_start": "2026-01-01", "range_end": "2026-01-31"})
+    response = client.get(
+        "/api/v1/usage", params={"range_start": "2026-01-01", "range_end": "2026-01-31"}
+    )
     assert response.status_code == 200
     body = response.json()
     assert body["rangeStart"] == "2026-01-01"

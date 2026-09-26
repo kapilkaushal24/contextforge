@@ -32,7 +32,10 @@ class FakeProvider:
 
 def make_request(text: str) -> OptimizationRequest:
     return OptimizationRequest(
-        text=text, platform="chatgpt", mode=OptimizationMode.BALANCED, privacy_policy=PrivacyPolicy.CLOUD_ALLOWED
+        text=text,
+        platform="chatgpt",
+        mode=OptimizationMode.BALANCED,
+        privacy_policy=PrivacyPolicy.CLOUD_ALLOWED,
     )
 
 

@@ -36,7 +36,97 @@ _CAMEL_RE = re.compile(r"^[A-Z][a-z]+[A-Z]\w*$")
 # Politeness, request wrappers and function words carry no task content. Modal/negation
 # words are handled by the constraint/negation features, not as content words.
 STOPWORDS = frozenset(
-    ["a", "an", "and", "or", "but", "of", "to", "in", "on", "for", "with", "this", "that", "these", "those", "is", "are", "was", "were", "be", "been", "being", "it", "its", "as", "at", "by", "from", "if", "then", "so", "do", "does", "did", "have", "has", "had", "please", "kindly", "could", "would", "can", "will", "you", "your", "i", "me", "my", "we", "us", "our", "thanks", "thank", "hi", "hello", "also", "just", "really", "very", "want", "need", "like", "must", "should", "shall", "not", "never", "no", "only", "the", "there", "here", "which", "who", "what", "when", "how", "about", "into", "than", "some", "any", "all", "each", "more", "most", "such", "up", "out"]
+    [
+        "a",
+        "an",
+        "and",
+        "or",
+        "but",
+        "of",
+        "to",
+        "in",
+        "on",
+        "for",
+        "with",
+        "this",
+        "that",
+        "these",
+        "those",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "it",
+        "its",
+        "as",
+        "at",
+        "by",
+        "from",
+        "if",
+        "then",
+        "so",
+        "do",
+        "does",
+        "did",
+        "have",
+        "has",
+        "had",
+        "please",
+        "kindly",
+        "could",
+        "would",
+        "can",
+        "will",
+        "you",
+        "your",
+        "i",
+        "me",
+        "my",
+        "we",
+        "us",
+        "our",
+        "thanks",
+        "thank",
+        "hi",
+        "hello",
+        "also",
+        "just",
+        "really",
+        "very",
+        "want",
+        "need",
+        "like",
+        "must",
+        "should",
+        "shall",
+        "not",
+        "never",
+        "no",
+        "only",
+        "the",
+        "there",
+        "here",
+        "which",
+        "who",
+        "what",
+        "when",
+        "how",
+        "about",
+        "into",
+        "than",
+        "some",
+        "any",
+        "all",
+        "each",
+        "more",
+        "most",
+        "such",
+        "up",
+        "out",
+    ]
 )
 _SUFFIXES = ("ing", "edly", "ed", "es", "s", "ly")
 
@@ -68,7 +158,11 @@ def _entities(prose: str) -> frozenset[str]:
     for sentence in _SENTENCE_RE.split(prose):
         words = _WORD_RE.findall(sentence)
         for index, word in enumerate(words):
-            if _ACRONYM_RE.match(word) or _CAMEL_RE.match(word) or index > 0 and word[0].isupper() and len(word) > 1:
+            if (
+                _ACRONYM_RE.match(word)
+                or _CAMEL_RE.match(word)
+                or (index > 0 and word[0].isupper() and len(word) > 1)
+            ):
                 found.add(word)
     return frozenset(found)
 
@@ -87,7 +181,8 @@ def extract(text: str) -> Features:
         prose=prose,
         fenced_blocks=frozenset(seg for seg in segments if is_fenced_block(seg)),
         numbers=frozenset(_NUMBER_RE.findall(prose)),
-        identifiers=frozenset(_INLINE_CODE_RE.findall(prose)) | frozenset(_IDENTIFIER_RE.findall(prose)),
+        identifiers=frozenset(_INLINE_CODE_RE.findall(prose))
+        | frozenset(_IDENTIFIER_RE.findall(prose)),
         quoted_literals=frozenset(quoted),
         negations=frozenset(m.lower() for m in _NEGATION_RE.findall(prose)),
         constraint_markers=frozenset(m.lower() for m in _CONSTRAINT_RE.findall(prose)),

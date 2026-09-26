@@ -10,16 +10,76 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege default: every job gets read-only access unless it explicitly
+# needs more (pr-title needs to comment, codeql needs to upload SARIF).
+permissions:
+  contents: read
+
 env:
   PYTHON_VERSION: "3.14"
   NODE_VERSION: "24"
 
 jobs:
-  # --- TypeScript: contracts + Chrome extension -----------------------------------
+  # --- Stage 1: fast PR-process gates ------------------------------------------------
+  # Cheap, seconds-long checks that fail fast on process problems before any expensive
+  # test/build/scan minutes are spent.
+
+  pr-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write # lets the action leave a comment explaining a failure
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+
+  one-pr-per-branch:
+    name: One open PR per branch
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Reject a second open PR from the same head branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branch="${{ github.head_ref }}"
+          count=$(gh pr list --repo "${{ github.repository }}" --head "$branch" --state open --json number --jq 'length')
+          if [ "$count" -gt 1 ]; then
+            echo "::error::$count open PRs found for head branch '$branch'. Only one open PR per branch is allowed — close the extra PR(s) or push further work from a new branch."
+            gh pr list --repo "${{ github.repository }}" --head "$branch" --state open
+            exit 1
+          fi
+
+  # --- Stage 2: TypeScript + Python packages -----------------------------------------
+  # Each package is installed and checked independently (mirrors local dev — see each
+  # package's README) rather than via one shared venv, since that's the same isolation
+  # a contributor gets locally. Every job runs: tests, `ruff format --check` (style),
+  # `ruff check` (lint + naming convention, N-rules), `mypy --strict` (types).
 
   extension:
     name: Extension (typecheck, lint, test, build)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,7 +90,7 @@ jobs:
       - run: npm run build:contracts
       - run: npm run typecheck
       - run: npm run test:extension
-      - name: Lint extension
+      - name: Lint extension (includes naming-convention enforcement)
         run: npm run lint --workspace=@ai-token-optimizer/chrome-extension
       - run: npm run build:extension
       - uses: actions/upload-artifact@v4
@@ -39,83 +99,107 @@ jobs:
           path: apps/chrome-extension/dist
           retention-days: 14
 
-  # --- Python packages ---------------------------------------------------------------
-  # Each package is installed and checked independently (mirrors local dev — see each
-  # package's README) rather than via one shared venv, since that's the same isolation
-  # a contributor gets locally.
-
   optimization-core:
     name: optimization-core (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
-      fail-fast: false
+      # Matrix-tested against both ends of `requires-python = ">=3.12"` (pyproject.toml)
+      # so that floor is actually enforced, not just declared. fail-fast: true — once
+      # one Python version fails, the other stops immediately rather than burning
+      # runner minutes on a change already known to be broken.
+      fail-fast: true
       matrix:
-        # Matrix-tested against both ends of `requires-python = ">=3.12"` (pyproject.toml)
-        # so that floor is actually enforced, not just declared.
         python-version: ["3.12", "3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: packages/optimization-core/pyproject.toml
       - run: pip install -e "packages/optimization-core[dev]"
-      - run: python -m pytest packages/optimization-core -q
-      - run: python -m mypy packages/optimization-core/src
+      - run: python -m pytest packages/optimization-core -q -x
+      - run: python -m ruff format --check packages/optimization-core/src packages/optimization-core/tests
       - run: python -m ruff check packages/optimization-core/src packages/optimization-core/tests
+      - run: python -m mypy packages/optimization-core/src
 
   tokenizers:
     name: tokenizers
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: packages/tokenizers/pyproject.toml
       - run: pip install -e packages/optimization-core -e "packages/tokenizers[openai,dev]"
-      - run: python -m pytest packages/tokenizers -q
-      - run: python -m mypy packages/tokenizers/src
+      - run: python -m pytest packages/tokenizers -q -x
+      - run: python -m ruff format --check packages/tokenizers/src packages/tokenizers/tests
       - run: python -m ruff check packages/tokenizers/src packages/tokenizers/tests
+      - run: python -m mypy packages/tokenizers/src
 
   provider-adapters:
     name: provider-adapters
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: packages/provider-adapters/pyproject.toml
       - run: pip install -e packages/optimization-core -e "packages/provider-adapters[dev]"
-      - run: python -m pytest packages/provider-adapters -q
-      - run: python -m mypy packages/provider-adapters/src
+      - run: python -m pytest packages/provider-adapters -q -x
+      - run: python -m ruff format --check packages/provider-adapters/src packages/provider-adapters/tests
       - run: python -m ruff check packages/provider-adapters/src packages/provider-adapters/tests
+      - run: python -m mypy packages/provider-adapters/src
 
   optimization-service:
     name: optimization-service (backend)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: services/optimization-service/pyproject.toml
       - run: |
           pip install -e packages/optimization-core \
             -e "packages/tokenizers[openai]" \
             -e packages/provider-adapters \
             -e "services/optimization-service[dev]"
       - name: Test (includes the eval regression suite in tests/evaluation)
-        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=95
+        run: python -m pytest -q -x --cov=app --cov-report=term-missing --cov-fail-under=95
         working-directory: services/optimization-service
-      - run: python -m mypy app tests
+      - run: python -m ruff format --check app tests
         working-directory: services/optimization-service
       - run: python -m ruff check app tests
         working-directory: services/optimization-service
+      - run: python -m mypy app tests
+        working-directory: services/optimization-service
 
-  # --- Security scanning (informational — not yet a merge gate; see docs/security) ----
+  # --- Stage 3: security + build ------------------------------------------------------
+  # All of these are real merge gates now (see ADR-013/014) — every one currently passes
+  # clean against this codebase; that's the bar a change has to keep clearing. Gated on
+  # every Stage 2 job succeeding first: if any package's tests or lint fail, these
+  # (the most expensive jobs in the workflow — CodeQL's matrix, Docker's full build) are
+  # skipped outright rather than started, per "stop the rest of CI once something's
+  # already known to fail." GitHub Actions has no native way to cancel a same-stage
+  # sibling job mid-run once another sibling fails (only `fail-fast` within one matrix
+  # does that) — staging expensive jobs behind `needs` is the correct, native mechanism
+  # for the cross-job case; see ADR-015 for the full reasoning.
 
   security-scan:
-    name: Security scan (informational)
+    name: Security scan (dependency + static analysis)
     runs-on: ubuntu-latest
-    continue-on-error: true
+    timeout-minutes: 10
+    needs: [extension, optimization-core, tokenizers, provider-adapters, optimization-service]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -129,18 +213,54 @@ jobs:
             -e "packages/tokenizers[openai]" \
             -e packages/provider-adapters \
             -e "services/optimization-service[dev]"
-      - name: pip-audit (known-vulnerable dependency versions)
+      - name: pip-audit (known-vulnerable Python dependency versions)
         run: pip install pip-audit && pip-audit
       - name: bandit (Python static security analysis)
-        run: pip install bandit && bandit -r services/optimization-service/app packages/*/src
-      - name: npm audit (JS dependency vulnerabilities)
+        run: |
+          pip install bandit
+          bandit -r services/optimization-service/app packages/optimization-core/src \
+            packages/tokenizers/src packages/provider-adapters/src
+      - run: npm ci
+      - name: npm audit (JS dependency vulnerabilities, high+critical)
         run: npm audit --audit-level=high
 
-  # --- Docker image build (validates the Dockerfile; no registry push configured) -----
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [extension, optimization-core, tokenizers, provider-adapters, optimization-service]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks needs full history to scan past commits, not just the diff
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [extension, optimization-core, tokenizers, provider-adapters, optimization-service]
+    permissions:
+      security-events: write
+    strategy:
+      fail-fast: true
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
 
   docker-build:
     name: Docker image build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [optimization-service]
     steps:
       - uses: actions/checkout@v4
@@ -153,3 +273,36 @@ jobs:
           tags: aito-optimization-service:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # --- Stage 4: single required status ------------------------------------------------
+  # One aggregate check so branch protection only needs to require *this* job, instead
+  # of hand-syncing 12+ individual job names (see ADR-014's "Consequences" section,
+  # which flagged that sync burden as a known gap) — this job closes it. `if: always()`
+  # so it still runs (and reports failure) even when an upstream job was skipped.
+
+  ci-status:
+    name: CI Status
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      [
+        pr-title,
+        one-pr-per-branch,
+        extension,
+        optimization-core,
+        tokenizers,
+        provider-adapters,
+        optimization-service,
+        security-scan,
+        secret-scan,
+        codeql,
+        docker-build,
+      ]
+    steps:
+      - name: Fail if any required job failed, was cancelled, or was skipped due to a failed dependency
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" || "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "::error::One or more required CI jobs did not succeed."
+            exit 1
+          fi

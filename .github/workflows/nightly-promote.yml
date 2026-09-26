@@ -1,0 +1,57 @@
+name: Nightly develop -> main promotion
+
+# Runs at 00:00 IST (UTC+5:30) daily. GitHub Actions cron is UTC-only, so 00:00 IST is
+# expressed as 18:30 UTC the previous day. Adjust this single line if the team's
+# timezone assumption ever changes.
+on:
+  schedule:
+    - cron: "30 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    name: Open/refresh develop -> main PR and enable auto-merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skip if develop has nothing new for main
+        id: diff
+        run: |
+          git fetch origin main develop
+          if git diff --quiet origin/main origin/develop; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update the promotion PR
+        if: steps.diff.outputs.has_changes == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh pr list --repo "${{ github.repository }}" --head develop --base main --state open --json number --jq '.[0].number')
+          if [ -z "$existing" ]; then
+            gh pr create \
+              --repo "${{ github.repository }}" \
+              --head develop \
+              --base main \
+              --title "chore: nightly sync develop into main" \
+              --body "Automated nightly promotion of \`develop\` into \`main\`, opened by the [nightly-promote workflow](.github/workflows/nightly-promote.yml). Auto-merge is enabled — this still requires all required CI checks to pass and the branch-protection-mandated human approval before it actually merges; nothing here bypasses review."
+            pr_number=$(gh pr list --repo "${{ github.repository }}" --head develop --base main --state open --json number --jq '.[0].number')
+          else
+            pr_number="$existing"
+            echo "Reusing existing promotion PR #$pr_number"
+          fi
+
+          # --auto, not an immediate merge: GitHub merges automatically only once every
+          # required status check passes AND the required PR review has been approved —
+          # branch protection on `main` (ADR-014/015) is left fully intact.
+          gh pr merge "$pr_number" --repo "${{ github.repository }}" --squash --auto

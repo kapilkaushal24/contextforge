@@ -20,7 +20,7 @@ class OpenAITokenizer:
             import tiktoken
 
             self._encoding = tiktoken.get_encoding(encoding_name)
-        except Exception:  # noqa: BLE001 - any load failure (import, unknown name, offline) -> heuristic
+        except Exception:
             self._encoding = None
 
     @property

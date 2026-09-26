@@ -99,7 +99,8 @@ def test_validate_endpoint_flags_dropped_negation_with_reasons(client: TestClien
 
 def test_validate_endpoint_scores_identical_text_as_perfect(client: TestClient) -> None:
     response = client.post(
-        "/api/v1/validate", json={"originalText": "Same text here.", "optimizedText": "Same text here."}
+        "/api/v1/validate",
+        json={"originalText": "Same text here.", "optimizedText": "Same text here."},
     )
 
     assert response.json() == {

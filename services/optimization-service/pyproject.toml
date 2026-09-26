@@ -36,6 +36,20 @@ strict = true
 
 [tool.ruff]
 line-length = 100
+[tool.ruff.lint]
+# Explicit, not implicit (industry-standard practice — don't rely on a linter's
+# version-dependent default select list). Curated deliberately:
+#   E/W  pycodestyle, F pyflakes, I isort (import order), N pep8-naming
+#   (enterprise naming convention: snake_case functions/vars, PascalCase classes,
+#   UPPER_CASE constants), UP pyupgrade (modern syntax), B flake8-bugbear,
+#   C4 comprehension simplification, SIM flake8-simplify, RUF ruff-specific.
+# Deliberately excluded: D (docstring rules — conflicts with this repo's "no comment
+# unless the WHY is non-obvious" style), ANN (redundant with mypy --strict already
+# enforced everywhere), S (bandit-equivalent — real `bandit` already runs separately
+# in CI; duplicating it here would just be double-reported noise), PL (pylint's rule
+# family is large/opinionated enough to warrant its own deliberate adoption pass, not
+# a drive-by addition here).
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's dependency-injection system requires calling Depends()/Query()/etc. as

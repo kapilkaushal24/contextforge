@@ -1,14 +1,21 @@
 # AI Token Optimizer
 
+[![CI](https://github.com/kapilkaushal24/contextforge/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/kapilkaushal24/contextforge/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/badge/security-CodeQL%20%2B%20gitleaks-informational)](https://github.com/kapilkaushal24/contextforge/security)
+
 Chrome extension + backend service that estimates and reduces token usage in prompts sent to
 AI chat tools, while preserving user intent — privacy-first, provider-agnostic, built to grow
 into an enterprise product.
 
-**Status:** Phases 0–14 complete. Planning docs, shared contracts, a buildable Chrome extension
-shell (with dynamic AI-platform detection, ADR-009), a FastAPI backend with the full optimization
-pipeline, 100% line coverage on `provider-adapters` and the backend, an evaluation harness
-([ml/evaluation](ml/evaluation)), and CI + a hardened Docker image on Python 3.14 / Node 24
-(ADR-013). The MVP is functionally complete; Phase 15 (enterprise features) is post-MVP. See
+**Status:** Phases 0–14 complete, plus repository governance (ADR-014). Planning docs, shared
+contracts, a buildable Chrome extension shell (with dynamic AI-platform detection, ADR-009), a
+FastAPI backend with the full optimization pipeline, 100% line coverage on `provider-adapters`
+and the backend, an evaluation harness ([ml/evaluation](ml/evaluation)), CI + a hardened Docker
+image on Python 3.14 / Node 24 (ADR-013), and enforced coding standards / blocking security
+scans / PR-only branch protection (not yet applied to the live repo — run
+`scripts/setup-branch-protection.sh` once, see
+[docs/security/branch-protection.md](docs/security/branch-protection.md)). The MVP is
+functionally complete; Phase 15 (enterprise features) is post-MVP. See
 [docs/product/development-phases.md](docs/product/development-phases.md).
 
 ## Quick start
@@ -49,6 +56,8 @@ Evaluation harness (once the backend is running): `python ml/evaluation/run_eval
 - [Chrome Extension Architecture](docs/architecture/chrome-extension.md)
 - [AI/ML Architecture & Optimization Pipeline](docs/architecture/ai-ml.md)
 - [Security & Privacy](docs/security/privacy-security.md)
+- [Branch Protection & Repo Rules](docs/security/branch-protection.md)
+- [Secrets Management](docs/security/secrets-management.md)
 - [Repository Structure](docs/architecture/folder-structure.md)
 - [Chrome Extension shell](apps/chrome-extension/README.md)
 - [Shared TS contracts](packages/contracts/README.md)
