@@ -4,9 +4,11 @@ Chrome extension + backend service that estimates and reduces token usage in pro
 AI chat tools, while preserving user intent — privacy-first, provider-agnostic, built to grow
 into an enterprise product.
 
-**Status:** Phases 0–12 complete — planning docs, shared contracts, a buildable Chrome extension
-shell (with dynamic AI-platform detection, ADR-009), and a FastAPI backend with deterministic optimization.
-Testing/evaluation (Phase 13) is next. See
+**Status:** Phases 0–14 complete. Planning docs, shared contracts, a buildable Chrome extension
+shell (with dynamic AI-platform detection, ADR-009), a FastAPI backend with the full optimization
+pipeline, 100% line coverage on `provider-adapters` and the backend, an evaluation harness
+([ml/evaluation](ml/evaluation)), and CI + a hardened Docker image on Python 3.14 / Node 24
+(ADR-013). The MVP is functionally complete; Phase 15 (enterprise features) is post-MVP. See
 [docs/product/development-phases.md](docs/product/development-phases.md).
 
 ## Quick start
@@ -30,6 +32,15 @@ python -m venv .venv
 ./.venv/Scripts/python.exe -m pip install -e "../../packages/optimization-core" -e ".[dev]"
 ./.venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000   # http://localhost:8000/docs
 ```
+
+Or via Docker (see [services/optimization-service/README.md](services/optimization-service/README.md)):
+
+```bash
+docker compose up -d --build   # then curl http://localhost:8000/healthz
+```
+
+Evaluation harness (once the backend is running): `python ml/evaluation/run_eval.py` — see
+[ml/evaluation/README.md](ml/evaluation/README.md).
 
 ## Start here
 

@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.14"
+  NODE_VERSION: "24"
+
+jobs:
+  # --- TypeScript: contracts + Chrome extension -----------------------------------
+
+  extension:
+    name: Extension (typecheck, lint, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build:contracts
+      - run: npm run typecheck
+      - run: npm run test:extension
+      - name: Lint extension
+        run: npm run lint --workspace=@ai-token-optimizer/chrome-extension
+      - run: npm run build:extension
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension-dist
+          path: apps/chrome-extension/dist
+          retention-days: 14
+
+  # --- Python packages ---------------------------------------------------------------
+  # Each package is installed and checked independently (mirrors local dev — see each
+  # package's README) rather than via one shared venv, since that's the same isolation
+  # a contributor gets locally.
+
+  optimization-core:
+    name: optimization-core (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Matrix-tested against both ends of `requires-python = ">=3.12"` (pyproject.toml)
+        # so that floor is actually enforced, not just declared.
+        python-version: ["3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e "packages/optimization-core[dev]"
+      - run: python -m pytest packages/optimization-core -q
+      - run: python -m mypy packages/optimization-core/src
+      - run: python -m ruff check packages/optimization-core/src packages/optimization-core/tests
+
+  tokenizers:
+    name: tokenizers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -e packages/optimization-core -e "packages/tokenizers[openai,dev]"
+      - run: python -m pytest packages/tokenizers -q
+      - run: python -m mypy packages/tokenizers/src
+      - run: python -m ruff check packages/tokenizers/src packages/tokenizers/tests
+
+  provider-adapters:
+    name: provider-adapters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -e packages/optimization-core -e "packages/provider-adapters[dev]"
+      - run: python -m pytest packages/provider-adapters -q
+      - run: python -m mypy packages/provider-adapters/src
+      - run: python -m ruff check packages/provider-adapters/src packages/provider-adapters/tests
+
+  optimization-service:
+    name: optimization-service (backend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: |
+          pip install -e packages/optimization-core \
+            -e "packages/tokenizers[openai]" \
+            -e packages/provider-adapters \
+            -e "services/optimization-service[dev]"
+      - name: Test (includes the eval regression suite in tests/evaluation)
+        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=95
+        working-directory: services/optimization-service
+      - run: python -m mypy app tests
+        working-directory: services/optimization-service
+      - run: python -m ruff check app tests
+        working-directory: services/optimization-service
+
+  # --- Security scanning (informational — not yet a merge gate; see docs/security) ----
+
+  security-scan:
+    name: Security scan (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: |
+          pip install -e packages/optimization-core \
+            -e "packages/tokenizers[openai]" \
+            -e packages/provider-adapters \
+            -e "services/optimization-service[dev]"
+      - name: pip-audit (known-vulnerable dependency versions)
+        run: pip install pip-audit && pip-audit
+      - name: bandit (Python static security analysis)
+        run: pip install bandit && bandit -r services/optimization-service/app packages/*/src
+      - name: npm audit (JS dependency vulnerabilities)
+        run: npm audit --audit-level=high
+
+  # --- Docker image build (validates the Dockerfile; no registry push configured) -----
+
+  docker-build:
+    name: Docker image build
+    runs-on: ubuntu-latest
+    needs: [optimization-service]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/optimization-service/Dockerfile
+          push: false
+          tags: aito-optimization-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
