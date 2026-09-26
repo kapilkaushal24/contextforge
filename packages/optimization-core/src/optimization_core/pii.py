@@ -31,7 +31,17 @@ _PHONE_RE = re.compile(
     r")(?!\w)"
 )
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
-_CARD_CANDIDATE_RE = re.compile(r"\b(?:\d[ -]?){13,19}\b")
+# A single bounded character-class repetition, not `(?:\d[ -]?){13,19}` (a group with
+# an *optional* element repeated a bounded-but-large number of times). That shape is a
+# textbook ReDoS pattern flagged by CodeQL's py/polynomial-redos: at every position the
+# engine must explore separator-or-not across up to 19 repetitions, and this runs via
+# `finditer` over the full request text (up to 100,000 untrusted chars, see
+# OptimizationRequest's length limit) — i.e. exactly the attacker-controlled, long-input
+# scenario that turns "slow" into a real denial-of-service. A character class like
+# `[\d \-]` has no such ambiguity: each character is matched by one deterministic branch,
+# so this is worst-case linear regardless of input, and the actual digit-count/Luhn check
+# still happens in Python afterward (_has_credit_card) exactly as before.
+_CARD_CANDIDATE_RE = re.compile(r"\b\d[\d \-]{11,30}\d\b")
 _API_KEY_RE = re.compile(
     r"\b(?:sk|pk)-[A-Za-z0-9]{20,}\b"  # OpenAI/Stripe-style
     r"|\bgh[pous]_[A-Za-z0-9]{20,}\b"  # GitHub tokens
