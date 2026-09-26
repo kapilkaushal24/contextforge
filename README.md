@@ -1,5 +1,8 @@
 # AI Token Optimizer
 
+[![CI](https://github.com/kapilkaushal24/contextforge/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/kapilkaushal24/contextforge/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/badge/security-CodeQL%20%2B%20gitleaks-informational)](https://github.com/kapilkaushal24/contextforge/security)
+
 Chrome extension + backend service that estimates and reduces token usage in prompts sent to
 AI chat tools, while preserving user intent — privacy-first, provider-agnostic, built to grow
 into an enterprise product.

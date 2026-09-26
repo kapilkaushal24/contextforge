@@ -16,6 +16,7 @@
 | [012](./ADR-012-observability-scope.md) | Observability scope: Prometheus metrics + log-correlated timing, no tracing backend | Accepted |
 | [013](./ADR-013-ci-docker-python314.md) | CI pipeline, Docker hardening, and the Python 3.14 / Node 24 migration | Accepted |
 | [014](./ADR-014-repo-governance.md) | Repository governance: branch protection, PR-only merges, enforced coding standards | Accepted |
+| [015](./ADR-015-ci-workflow-hardening.md) | CI staged fail-fast, one-PR-per-branch, branch lifecycle, nightly develop→main promotion | Accepted |
 
 Each ADR follows: **Context → Decision → Alternatives considered → Consequences**.
 New ADRs are added as significant, hard-to-reverse technical decisions are made — not for

@@ -21,13 +21,17 @@ gh auth login              # interactive — opens a browser
 ./scripts/setup-branch-protection.sh
 ```
 
-This calls the classic Branch Protection REST API (`PUT /repos/{owner}/{repo}/branches/
-{branch}/protection`) for both `main` and `develop` with:
+This first sets repo-level defaults (`PATCH /repos/{owner}/{repo}`), then calls the
+classic Branch Protection REST API (`PUT /repos/{owner}/{repo}/branches/{branch}/
+protection`) for both `main` and `develop`:
 
 | Setting | Value | Effect |
 |---|---|---|
+| `default_branch` | `develop` | New PRs pre-select `develop` as the base branch |
+| `delete_branch_on_merge` | `true` | A head branch is deleted the moment its PR merges — since GitHub refuses to reopen a PR from a deleted branch, a merged branch can't be reused for a second PR (contributors must branch again for further work) |
+| `allow_auto_merge` | `true` | Required for the nightly `develop` → `main` workflow (below) to arm auto-merge; it still only *arms* — the merge itself still waits on required checks + review |
 | `required_pull_request_reviews` | ≥1 approval, stale reviews dismissed on new commits, Code Owner review required | No direct commits merge in — every change is reviewed |
-| `required_status_checks` | all 12 CI job names below, `strict: true` | PR must be up to date with the base branch AND every job green |
+| `required_status_checks` | `CI Status` (single aggregate job), `strict: true` | PR must be up to date with the base branch AND every underlying CI job green |
 | `enforce_admins` | `false` | **Repo admins can bypass all of the above** (the "only admin can force-merge" requirement) — everyone else cannot |
 | `restrictions` | `null` | No separate push-allowlist beyond what PR-required already enforces |
 | `allow_force_pushes` | `false` | No rewriting protected-branch history |
@@ -35,24 +39,33 @@ This calls the classic Branch Protection REST API (`PUT /repos/{owner}/{repo}/br
 | `required_linear_history` | `true` | No merge commits with multiple parents polluting history |
 | `required_conversation_resolution` | `true` | Every PR review comment thread must be resolved before merge |
 
-### Required status checks (must match `.github/workflows/ci.yml` job names exactly)
+### Required status check
 
-1. `PR title (Conventional Commits)`
-2. `Extension (typecheck, lint, test, build)`
-3. `optimization-core (py3.12)`
-4. `optimization-core (py3.14)`
-5. `tokenizers`
-6. `provider-adapters`
-7. `optimization-service (backend)`
-8. `Security scan (dependency + static analysis)`
-9. `Secret scan (gitleaks)`
-10. `CodeQL (python)`
-11. `CodeQL (javascript-typescript)`
-12. `Docker image build`
+Just one: **`CI Status`** — a single aggregate job in `.github/workflows/ci.yml` that
+`needs:` every real job (PR title, one-PR-per-branch, all package tests, security scan,
+secret scan, CodeQL, Docker build) and fails if any of them failed, was cancelled, or
+was skipped because an upstream dependency failed. Requiring just this one check instead
+of hand-listing every individual job name (the old approach) removes the sync burden
+ADR-014 flagged and is kept in sync automatically — see ADR-015.
 
 GitHub only lets you require a check that has run at least once — if this is a brand
 new repo, push once or open one PR first so the workflow runs, *then* apply the script
 (it's idempotent; re-run any time).
+
+### One PR per branch
+
+A dedicated `one-pr-per-branch` CI job (part of `CI Status`) fails the check if more
+than one open PR already exists for the same head branch, so a second PR from a branch
+that already has one open must be closed, or the new work pushed from a fresh branch.
+
+### Nightly develop → main promotion
+
+`.github/workflows/nightly-promote.yml` runs on a schedule (00:00 IST daily — see the
+workflow file's cron comment) and opens/refreshes a `develop` → `main` PR with
+`gh pr merge --auto`. This *arms* auto-merge; GitHub only completes the merge once the
+`CI Status` check passes and the required human approval is given — branch protection
+on `main` is not bypassed. See ADR-015 for the alternatives considered (a true bypass
+merge was rejected).
 
 ## Verify
 
