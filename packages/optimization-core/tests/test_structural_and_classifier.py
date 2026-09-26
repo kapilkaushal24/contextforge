@@ -54,5 +54,11 @@ def test_fenced_code_is_never_modified() -> None:
 def test_classifier_detects_fenced_and_line_based_code() -> None:
     analyzer = RuleBasedContentAnalyzer()
     assert analyzer.classify("Fix:\n```py\nx=1\n```") is PromptType.CODE
-    assert analyzer.classify("import os\ndef f(x):\n    return x\nclass A:\n    pass") is PromptType.CODE
-    assert analyzer.classify("Please write a friendly email to my landlord about the leak.") is PromptType.GENERAL
+    assert (
+        analyzer.classify("import os\ndef f(x):\n    return x\nclass A:\n    pass")
+        is PromptType.CODE
+    )
+    assert (
+        analyzer.classify("Please write a friendly email to my landlord about the leak.")
+        is PromptType.GENERAL
+    )

@@ -82,7 +82,8 @@ async def test_minimal_prompt_is_returned_unchanged() -> None:
 
 async def test_redundant_prompt_is_compressed_and_reports_changes() -> None:
     request = make_request(
-        "Use PostgreSQL for the database.   Write unit tests.\n\n\n\n\nUse PostgreSQL for the database."
+        "Use PostgreSQL for the database.   Write unit tests.\n\n\n\n\n"
+        "Use PostgreSQL for the database."
     )
 
     result = await run(request)

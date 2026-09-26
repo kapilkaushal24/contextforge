@@ -45,7 +45,10 @@ def test_empty_output_is_zero() -> None:
             "Use PostgreSQL for the database. Add tests. Use PostgreSQL for the database.",
             "Use PostgreSQL for the database. Add tests.",
         ),
-        ("Summarize the report in three bullet points. Thanks in advance!", "Summarize the report in three bullet points."),
+        (
+            "Summarize the report in three bullet points. Thanks in advance!",
+            "Summarize the report in three bullet points.",
+        ),
     ],
 )
 def test_harmless_edits_are_not_flagged_for_review(original: str, optimized: str) -> None:
@@ -61,13 +64,18 @@ def test_the_real_strategy_outputs_never_trip_review_on_typical_prompts() -> Non
         "Fix the login bug.   Fix the login bug.\n\n\n\nThanks in advance!",
     ]
     for text in prompts:
-        out, _ = asyncio.run(DeterministicCompressionStrategy(OptimizationMode.AGGRESSIVE).optimize(text))
+        out, _ = asyncio.run(
+            DeterministicCompressionStrategy(OptimizationMode.AGGRESSIVE).optimize(text)
+        )
         out, _ = asyncio.run(StructuralOptimizationStrategy().optimize(out))
         assert V.validate(text, out).confidence >= THRESHOLD, (text, out)
 
 
 def test_good_llm_style_rewrite_passes() -> None:
-    rewrite = 'Write Python parse_config: read YAML, must not use eval, return at most 10 keys, log "config loaded" once.'
+    rewrite = (
+        "Write Python parse_config: read YAML, must not use eval, "
+        'return at most 10 keys, log "config loaded" once.'
+    )
     r = V.validate(LONG, rewrite)
     # "It should return" -> imperative "return" drops the modal "should": a soft,
     # informational loss that must not, on its own, trigger review.
@@ -78,13 +86,31 @@ def test_good_llm_style_rewrite_passes() -> None:
 @pytest.mark.parametrize(
     ("rewrite", "issue"),
     [
-        ("Write Python parse_config: read YAML, use eval, return at most 10 keys, log \"config loaded\" once.", "missing_negations"),
-        ("Write Python parse_config: read YAML, must not use eval, return at most 20 keys, log \"config loaded\" once.", "missing_numbers"),
-        ("Write Python parse_config: read YAML, must not use eval, return at most 10 keys, log once.", "missing_quoted_literals"),
-        ("Write Python load_settings: read YAML, must not use eval, return at most 10 keys, log \"config loaded\" once.", "missing_identifiers"),
+        (
+            "Write Python parse_config: read YAML, use eval, "
+            'return at most 10 keys, log "config loaded" once.',
+            "missing_negations",
+        ),
+        (
+            "Write Python parse_config: read YAML, must not use eval, "
+            'return at most 20 keys, log "config loaded" once.',
+            "missing_numbers",
+        ),
+        (
+            "Write Python parse_config: read YAML, must not use eval, "
+            "return at most 10 keys, log once.",
+            "missing_quoted_literals",
+        ),
+        (
+            "Write Python load_settings: read YAML, must not use eval, "
+            'return at most 10 keys, log "config loaded" once.',
+            "missing_identifiers",
+        ),
     ],
 )
-def test_dropping_a_hard_constraint_forces_review_despite_high_word_overlap(rewrite: str, issue: str) -> None:
+def test_dropping_a_hard_constraint_forces_review_despite_high_word_overlap(
+    rewrite: str, issue: str
+) -> None:
     r = V.validate(LONG, rewrite)
     assert issue in r.issues
     assert r.semantic_similarity > 0.7  # words mostly match...
@@ -105,13 +131,18 @@ def test_soft_losses_reduce_the_score_without_hard_cap() -> None:
 
 
 def test_introduced_numbers_are_penalized() -> None:
-    r = V.validate("Write a short poem about autumn leaves falling.", "Write a 500 word poem about autumn leaves.")
+    r = V.validate(
+        "Write a short poem about autumn leaves falling.",
+        "Write a 500 word poem about autumn leaves.",
+    )
     assert "introduced_content" in r.issues
     assert r.constraint_preservation < 1.0
 
 
 def test_unrelated_text_scores_low_similarity() -> None:
-    r = V.validate("Explain how photosynthesis works in plants.", "Recommend a good pasta recipe for dinner.")
+    r = V.validate(
+        "Explain how photosynthesis works in plants.", "Recommend a good pasta recipe for dinner."
+    )
     assert r.semantic_similarity < 0.2 and r.confidence < THRESHOLD
     assert "topic_drift" in r.issues
 

@@ -59,7 +59,12 @@ def test_injection_payload_never_reaches_the_system_role(
 ) -> None:
     response = client.post(
         "/api/v1/optimize",
-        json={"text": payload, "platform": "chatgpt", "mode": "balanced", "privacyPolicy": "cloud_allowed"},
+        json={
+            "text": payload,
+            "platform": "chatgpt",
+            "mode": "balanced",
+            "privacyPolicy": "cloud_allowed",
+        },
     )
     assert response.status_code == 200
     assert provider.last_system == SYSTEM_PROMPT
@@ -71,7 +76,12 @@ def test_a_compromised_provider_cannot_replace_the_users_prompt(
 ) -> None:
     response = client.post(
         "/api/v1/optimize",
-        json={"text": payload, "platform": "chatgpt", "mode": "balanced", "privacyPolicy": "cloud_allowed"},
+        json={
+            "text": payload,
+            "platform": "chatgpt",
+            "mode": "balanced",
+            "privacyPolicy": "cloud_allowed",
+        },
     )
     body = response.json()
     # The safety gate (topic_drift + not_shorter, per optimization_core.safety) must

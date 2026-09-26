@@ -15,6 +15,7 @@
 | [011](./ADR-011-pii-detection-and-injection-hardening.md) | PII detection gate + prompt-injection hardening | Accepted |
 | [012](./ADR-012-observability-scope.md) | Observability scope: Prometheus metrics + log-correlated timing, no tracing backend | Accepted |
 | [013](./ADR-013-ci-docker-python314.md) | CI pipeline, Docker hardening, and the Python 3.14 / Node 24 migration | Accepted |
+| [014](./ADR-014-repo-governance.md) | Repository governance: branch protection, PR-only merges, enforced coding standards | Accepted |
 
 Each ADR follows: **Context → Decision → Alternatives considered → Consequences**.
 New ADRs are added as significant, hard-to-reverse technical decisions are made — not for

@@ -42,7 +42,10 @@ def run(strategy: SemanticCompressionStrategy, text: str) -> tuple[str, list[Cha
 
 
 def test_accepts_safe_shorter_rewrite() -> None:
-    strategy, _ = semantic("Write Python parse_config: read YAML, must not use eval, return at most 10 keys, never mutate input.")
+    strategy, _ = semantic(
+        "Write Python parse_config: read YAML, must not use eval, "
+        "return at most 10 keys, never mutate input."
+    )
     out, kinds = run(strategy, LONG)
     assert out.startswith("Write Python parse_config")
     assert kinds == [ChangeType.SEMANTIC_COMPRESSION]
@@ -51,9 +54,12 @@ def test_accepts_safe_shorter_rewrite() -> None:
 @pytest.mark.parametrize(
     "reply",
     [
-        "Write parse_config: read YAML, return at most 10 keys, never mutate input.",  # dropped "not"... eval
-        "Write a function that reads YAML, must not use eval, return at most 10 keys.",  # dropped identifier
-        "Write parse_config: read YAML, must not use eval, return keys, never mutate input.",  # dropped number
+        # dropped "not"... eval
+        "Write parse_config: read YAML, return at most 10 keys, never mutate input.",
+        # dropped identifier
+        "Write a function that reads YAML, must not use eval, return at most 10 keys.",
+        # dropped number
+        "Write parse_config: read YAML, must not use eval, return keys, never mutate input.",
         LONG + " Extra.",  # not shorter
         "",
     ],
@@ -107,8 +113,14 @@ def test_router_gates_in_order() -> None:
     assert router(enabled=False).route(request(), general, 5000).reason == "llm_disabled"
     local = request(privacy=PrivacyPolicy.LOCAL_ONLY)
     assert router().route(local, general, 5000).reason == "privacy_local_only"
-    assert router().route(request(OptimizationMode.CONSERVATIVE), general, 5000).reason == "mode_or_type_excludes_llm"
-    assert router().route(request(OptimizationMode.CODE), general, 5000).reason == "mode_or_type_excludes_llm"
+    assert (
+        router().route(request(OptimizationMode.CONSERVATIVE), general, 5000).reason
+        == "mode_or_type_excludes_llm"
+    )
+    assert (
+        router().route(request(OptimizationMode.CODE), general, 5000).reason
+        == "mode_or_type_excludes_llm"
+    )
     assert router().route(request(), PromptType.CODE, 5000).reason == "mode_or_type_excludes_llm"
 
 
@@ -137,7 +149,9 @@ def test_sensitive_content_blocks_cloud_routing_by_default() -> None:
 
 def test_sensitive_content_gate_can_be_disabled_by_policy() -> None:
     permissive = router(block_pii_from_cloud=False)
-    decision = permissive.route(request(), PromptType.GENERAL, 2000, contains_sensitive_content=True)
+    decision = permissive.route(
+        request(), PromptType.GENERAL, 2000, contains_sensitive_content=True
+    )
     assert decision.reason == "llm_selected"
 
 

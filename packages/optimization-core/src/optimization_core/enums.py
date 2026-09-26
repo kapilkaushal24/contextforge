@@ -1,12 +1,13 @@
 """Shared enums mirroring packages/contracts/src/enums.ts.
 
-Kept as `str, Enum` so values serialize identically to the TS string-union side.
+Kept as `StrEnum` (Python 3.11+) so values serialize identically to the TS
+string-union side while also being real `str` instances.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 
-class OptimizationMode(str, Enum):
+class OptimizationMode(StrEnum):
     CONSERVATIVE = "conservative"
     BALANCED = "balanced"
     AGGRESSIVE = "aggressive"
@@ -14,7 +15,7 @@ class OptimizationMode(str, Enum):
     CONTEXT = "context"
 
 
-class PrivacyPolicy(str, Enum):
+class PrivacyPolicy(StrEnum):
     CLOUD_ALLOWED = "cloud_allowed"
     LOCAL_ONLY = "local_only"
 
@@ -26,27 +27,27 @@ class PrivacyPolicy(str, Enum):
 Platform = str
 
 
-class PromptType(str, Enum):
+class PromptType(StrEnum):
     CODE = "code"
     DOCUMENTATION = "documentation"
     CONVERSATION = "conversation"
     GENERAL = "general"
 
 
-class TokenizerProvider(str, Enum):
+class TokenizerProvider(StrEnum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GEMINI = "gemini"
     GENERIC = "generic"
 
 
-class ChangeImpact(str, Enum):
+class ChangeImpact(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
 
 
-class ChangeType(str, Enum):
+class ChangeType(StrEnum):
     DEDUPLICATION = "deduplication"
     WHITESPACE_CLEANUP = "whitespace_cleanup"
     BOILERPLATE_REMOVAL = "boilerplate_removal"

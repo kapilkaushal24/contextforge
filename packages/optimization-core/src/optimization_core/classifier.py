@@ -10,7 +10,8 @@ from optimization_core.enums import PromptType
 
 _CODE_LINE_RE = re.compile(
     r"^\s*(?:def |class |import |from \S+ import |function |const |let |var |return\b|"
-    r"public |private |#include|SELECT |INSERT |UPDATE |DELETE |[\w.]+\(.*\)\s*[{;:]?\s*$|.*[{};]\s*$)"
+    r"public |private |#include|SELECT |INSERT |UPDATE |DELETE |"
+    r"[\w.]+\(.*\)\s*[{;:]?\s*$|.*[{};]\s*$)"
 )
 _CODE_LINE_RATIO = 0.3
 

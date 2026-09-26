@@ -1,6 +1,6 @@
 """Consistent error envelope for every /api/v1/* endpoint (docs/api/contracts.md):
 
-    { "error": { "code": "...", "message": "...", "request_id": "..." } }
+{ "error": { "code": "...", "message": "...", "request_id": "..." } }
 """
 
 import logging
@@ -26,12 +26,14 @@ class ApiErrorBody(BaseModel):
     error: ApiErrorDetail
 
 
-class ApiException(Exception):
+class ApiError(Exception):
     """Raise from application/route code for a domain-level failure with a stable
     machine-readable `code` (as opposed to framework-level HTTP/validation errors,
     which are handled separately below)."""
 
-    def __init__(self, code: str, message: str, status_code: int = status.HTTP_400_BAD_REQUEST) -> None:
+    def __init__(
+        self, code: str, message: str, status_code: int = status.HTTP_400_BAD_REQUEST
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
@@ -39,15 +41,19 @@ class ApiException(Exception):
 
 
 def _error_response(status_code: int, code: str, message: str, request: Request) -> JSONResponse:
-    body = ApiErrorBody(error=ApiErrorDetail(code=code, message=message, request_id=get_request_id(request)))
+    body = ApiErrorBody(
+        error=ApiErrorDetail(code=code, message=message, request_id=get_request_id(request))
+    )
     return JSONResponse(status_code=status_code, content=body.model_dump())
 
 
-async def api_exception_handler(request: Request, exc: ApiException) -> JSONResponse:
+async def api_exception_handler(request: Request, exc: ApiError) -> JSONResponse:
     return _error_response(exc.status_code, exc.code, exc.message, request)
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     return _error_response(
         status.HTTP_422_UNPROCESSABLE_CONTENT, "VALIDATION_ERROR", str(exc.errors()), request
     )
@@ -65,5 +71,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     the response body."""
     logger.exception("unhandled exception", extra={"request_id": get_request_id(request)})
     return _error_response(
-        status.HTTP_500_INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "An unexpected error occurred.", request
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "INTERNAL_ERROR",
+        "An unexpected error occurred.",
+        request,
     )

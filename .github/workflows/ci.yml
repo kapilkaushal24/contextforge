@@ -15,6 +15,31 @@ env:
   NODE_VERSION: "24"
 
 jobs:
+  # --- PR process standards -----------------------------------------------------------
+
+  pr-title:
+    name: PR title (Conventional Commits)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+
   # --- TypeScript: contracts + Chrome extension -----------------------------------
 
   extension:
@@ -30,7 +55,7 @@ jobs:
       - run: npm run build:contracts
       - run: npm run typecheck
       - run: npm run test:extension
-      - name: Lint extension
+      - name: Lint extension (includes naming-convention enforcement)
         run: npm run lint --workspace=@ai-token-optimizer/chrome-extension
       - run: npm run build:extension
       - uses: actions/upload-artifact@v4
@@ -42,7 +67,8 @@ jobs:
   # --- Python packages ---------------------------------------------------------------
   # Each package is installed and checked independently (mirrors local dev — see each
   # package's README) rather than via one shared venv, since that's the same isolation
-  # a contributor gets locally.
+  # a contributor gets locally. Every job runs: tests, `ruff format --check` (style),
+  # `ruff check` (lint + naming convention, N-rules), `mypy --strict` (types).
 
   optimization-core:
     name: optimization-core (py${{ matrix.python-version }})
@@ -60,8 +86,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e "packages/optimization-core[dev]"
       - run: python -m pytest packages/optimization-core -q
-      - run: python -m mypy packages/optimization-core/src
+      - run: python -m ruff format --check packages/optimization-core/src packages/optimization-core/tests
       - run: python -m ruff check packages/optimization-core/src packages/optimization-core/tests
+      - run: python -m mypy packages/optimization-core/src
 
   tokenizers:
     name: tokenizers
@@ -73,8 +100,9 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install -e packages/optimization-core -e "packages/tokenizers[openai,dev]"
       - run: python -m pytest packages/tokenizers -q
-      - run: python -m mypy packages/tokenizers/src
+      - run: python -m ruff format --check packages/tokenizers/src packages/tokenizers/tests
       - run: python -m ruff check packages/tokenizers/src packages/tokenizers/tests
+      - run: python -m mypy packages/tokenizers/src
 
   provider-adapters:
     name: provider-adapters
@@ -86,8 +114,9 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install -e packages/optimization-core -e "packages/provider-adapters[dev]"
       - run: python -m pytest packages/provider-adapters -q
-      - run: python -m mypy packages/provider-adapters/src
+      - run: python -m ruff format --check packages/provider-adapters/src packages/provider-adapters/tests
       - run: python -m ruff check packages/provider-adapters/src packages/provider-adapters/tests
+      - run: python -m mypy packages/provider-adapters/src
 
   optimization-service:
     name: optimization-service (backend)
@@ -105,17 +134,20 @@ jobs:
       - name: Test (includes the eval regression suite in tests/evaluation)
         run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=95
         working-directory: services/optimization-service
-      - run: python -m mypy app tests
+      - run: python -m ruff format --check app tests
         working-directory: services/optimization-service
       - run: python -m ruff check app tests
         working-directory: services/optimization-service
+      - run: python -m mypy app tests
+        working-directory: services/optimization-service
 
-  # --- Security scanning (informational — not yet a merge gate; see docs/security) ----
+  # --- Security: dependency vulnerabilities, static analysis, secrets, SAST -----------
+  # All of these are real merge gates now (see ADR-013/014) — every one currently passes
+  # clean against this codebase; that's the bar a change has to keep clearing.
 
   security-scan:
-    name: Security scan (informational)
+    name: Security scan (dependency + static analysis)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -129,12 +161,45 @@ jobs:
             -e "packages/tokenizers[openai]" \
             -e packages/provider-adapters \
             -e "services/optimization-service[dev]"
-      - name: pip-audit (known-vulnerable dependency versions)
+      - name: pip-audit (known-vulnerable Python dependency versions)
         run: pip install pip-audit && pip-audit
       - name: bandit (Python static security analysis)
-        run: pip install bandit && bandit -r services/optimization-service/app packages/*/src
-      - name: npm audit (JS dependency vulnerabilities)
+        run: |
+          pip install bandit
+          bandit -r services/optimization-service/app packages/optimization-core/src \
+            packages/tokenizers/src packages/provider-adapters/src
+      - run: npm ci
+      - name: npm audit (JS dependency vulnerabilities, high+critical)
         run: npm audit --audit-level=high
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks needs full history to scan past commits, not just the diff
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
 
   # --- Docker image build (validates the Dockerfile; no registry push configured) -----
 

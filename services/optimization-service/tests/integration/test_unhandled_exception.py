@@ -6,7 +6,7 @@ from typing import NoReturn
 from fastapi.testclient import TestClient
 
 from app.api.deps import get_tokenizer_registry
-from app.api.errors import ApiException
+from app.api.errors import ApiError
 from app.main import create_app
 
 
@@ -15,7 +15,7 @@ def _boom() -> NoReturn:
 
 
 def _boom_with_api_exception() -> NoReturn:
-    raise ApiException("SOME_DOMAIN_ERROR", "a domain-level failure with a stable code", 409)
+    raise ApiError("SOME_DOMAIN_ERROR", "a domain-level failure with a stable code", 409)
 
 
 def test_unhandled_exception_returns_standard_error_envelope() -> None:
@@ -43,7 +43,7 @@ def test_unhandled_exception_returns_standard_error_envelope() -> None:
 
 
 def test_api_exception_uses_its_own_code_and_status() -> None:
-    """No application code currently raises ApiException (it's a documented extension
+    """No application code currently raises ApiError (it's a documented extension
     point for a future domain-level error with a stable code — see its docstring), but
     the handler wiring itself must work when something does."""
     app = create_app()

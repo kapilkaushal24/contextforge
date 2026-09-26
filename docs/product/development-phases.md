@@ -76,6 +76,17 @@ starts writing code before the prior phase's docs/interfaces are agreed.
   runner — only verified by replicating each job's exact commands locally)
 - **Phase 15** — Enterprise features (orgs/teams/RBAC/policies/analytics) — post-MVP
 
+- **Post-Phase-14 governance** (ADR-014): naming-convention enforcement (`ruff` N-rules,
+  `@typescript-eslint/naming-convention`) found and fixed one real violation
+  (`ApiException` -> `ApiError`) and modernized 6 enums to `StrEnum`; `ruff format --check`
+  added to every Python CI job; security scanning promoted from informational to a real merge
+  gate; added CodeQL (Python + JS/TS) and gitleaks secret scanning (verified clean against this
+  repo's actual git history via a local Docker run); PR title now enforces Conventional Commits;
+  added `CODEOWNERS` and a PR template; wrote (but cannot apply — needs a human's `gh auth
+  login`) `scripts/setup-branch-protection.sh` for PR-only merges on `main`/`develop` with
+  admin-only bypass — see `docs/security/branch-protection.md` ✅ (branch protection itself is
+  not yet applied to the live GitHub repo; run the script to apply it)
+
 This batch delivers Phases 0–2 plus the enterprise-readiness documents (ERD, ADRs, API
 contract proposal, MVP scope) called out in the initial task. Implementation begins at Phase 3
 once reviewed.

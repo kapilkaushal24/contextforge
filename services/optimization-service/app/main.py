@@ -8,7 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.deps import close_providers
 from app.api.errors import (
-    ApiException,
+    ApiError,
     api_exception_handler,
     http_exception_handler,
     unhandled_exception_handler,
@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
         allow_headers=["Content-Type", "X-API-Key", "X-Request-ID"],
     )
 
-    app.add_exception_handler(ApiException, api_exception_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(ApiError, api_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, unhandled_exception_handler)

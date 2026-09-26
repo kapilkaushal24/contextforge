@@ -20,7 +20,9 @@ def test_metrics_endpoint_is_not_gated_by_api_key() -> None:
 
     app = create_app()
     app.dependency_overrides[get_settings] = lambda: Settings(
-        _env_file=None, require_api_key=True, api_key="secret"  # type: ignore[call-arg]
+        _env_file=None,
+        require_api_key=True,
+        api_key="secret",  # type: ignore[call-arg]
     )
     client = TestClient(app)
     assert client.get("/metrics").status_code == 200

@@ -71,7 +71,9 @@ class StructuralOptimizationStrategy:
         return optimized, [
             OptimizationChange(
                 type=ChangeType.STRUCTURAL_REWRITE,
-                description=f"Removed {rewrites} request wrapper phrase(s) (e.g. 'could you please')",
+                description=(
+                    f"Removed {rewrites} request wrapper phrase(s) (e.g. 'could you please')"
+                ),
                 impact=ChangeImpact.LOW,
             )
         ]

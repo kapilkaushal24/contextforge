@@ -69,5 +69,7 @@ class ModelRouter:
         p = self._policy
         estimated_cost = (tokens + p.prompt_overhead_tokens) / 1000 * p.optimizer_input_price_per_1k
         estimated_cost += tokens * p.expected_output_ratio / 1000 * p.optimizer_output_price_per_1k
-        estimated_savings = tokens * p.expected_reduction_ratio / 1000 * p.downstream_input_price_per_1k
+        estimated_savings = (
+            tokens * p.expected_reduction_ratio / 1000 * p.downstream_input_price_per_1k
+        )
         return estimated_cost < estimated_savings

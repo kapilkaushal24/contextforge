@@ -16,7 +16,9 @@ CLEAN_TEXT = "Could you please summarize this quarterly report for the board?"
 EMAIL_TEXT = "Could you please draft a reply to jane.doe@example.com about the invoice?"
 # Concatenated rather than a literal contiguous string — an obviously-fake fixture that
 # satisfies our regex's *shape*, kept from visually matching real-token scanners.
-API_KEY_TEXT = "Here is my key " + "sk-" + "abcdefghijklmnopqrstuvwx" + ", please explain what scope it needs."
+API_KEY_TEXT = (
+    "Here is my key " + "sk-" + "abcdefghijklmnopqrstuvwx" + ", please explain what scope it needs."
+)
 REWRITE = "a short rewrite"
 
 
@@ -50,7 +52,12 @@ def client(provider: RecordingProvider) -> Iterator[TestClient]:
 def optimize(client: TestClient, text: str) -> dict[str, object]:
     response = client.post(
         "/api/v1/optimize",
-        json={"text": text, "platform": "chatgpt", "mode": "balanced", "privacyPolicy": "cloud_allowed"},
+        json={
+            "text": text,
+            "platform": "chatgpt",
+            "mode": "balanced",
+            "privacyPolicy": "cloud_allowed",
+        },
     )
     assert response.status_code == 200
     body: dict[str, object] = response.json()
@@ -65,14 +72,18 @@ def test_clean_prompt_uses_the_llm_and_reports_no_categories(
     assert body["sensitiveContentCategories"] == []
 
 
-def test_email_blocks_the_llm_and_is_reported(client: TestClient, provider: RecordingProvider) -> None:
+def test_email_blocks_the_llm_and_is_reported(
+    client: TestClient, provider: RecordingProvider
+) -> None:
     body = optimize(client, EMAIL_TEXT)
     assert provider.calls == 0
     assert body["sensitiveContentCategories"] == ["email"]
     assert body["optimizedText"] != REWRITE
 
 
-def test_api_key_blocks_the_llm_and_is_reported(client: TestClient, provider: RecordingProvider) -> None:
+def test_api_key_blocks_the_llm_and_is_reported(
+    client: TestClient, provider: RecordingProvider
+) -> None:
     body = optimize(client, API_KEY_TEXT)
     assert provider.calls == 0
     assert "api_key" in body["sensitiveContentCategories"]  # type: ignore[operator]
