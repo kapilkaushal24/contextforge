@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "optimization-service",
+      "runtimeExecutable": "services/optimization-service/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m", "uvicorn", "app.main:app", "--reload", "--port", "8000",
+        "--app-dir", "services/optimization-service"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "chrome-extension",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:extension"],
+      "port": 5173
+    }
+  ]
+}
