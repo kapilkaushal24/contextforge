@@ -2,10 +2,14 @@ import { ModeSelector } from "../components/ModeSelector.js";
 import { PlatformBadge } from "../components/PlatformBadge.js";
 import { useActivePlatform } from "../hooks/useActivePlatform.js";
 import { useSettings } from "../hooks/useSettings.js";
+import { useTodayStats } from "../hooks/useTodayStats.js";
+import { averageReduction } from "../services/stats.js";
 
 export function App(): JSX.Element {
   const { settings, update } = useSettings();
   const activePlatform = useActivePlatform();
+  const stats = useTodayStats();
+  const avgReduction = stats ? averageReduction(stats) : null;
 
   return (
     <div className="w-80 p-4 text-gray-900">
@@ -30,15 +34,19 @@ export function App(): JSX.Element {
         <h2 className="mb-1 font-medium">Today</h2>
         <dl className="grid grid-cols-2 gap-y-1 text-xs text-gray-600">
           <dt>Prompts optimized</dt>
-          <dd className="text-right font-mono">—</dd>
+          <dd className="text-right font-mono">{stats ? stats.promptsOptimized : "—"}</dd>
           <dt>Tokens saved</dt>
-          <dd className="text-right font-mono">—</dd>
+          <dd className="text-right font-mono">{stats ? stats.tokensSaved : "—"}</dd>
           <dt>Avg. reduction</dt>
-          <dd className="text-right font-mono">—</dd>
+          <dd className="text-right font-mono">
+            {avgReduction === null ? "—" : `${Math.round(avgReduction)}%`}
+          </dd>
         </dl>
-        <p className="mt-2 text-[11px] text-gray-400">
-          Stats populate once the optimization backend is connected (Phase 5+).
-        </p>
+        {stats && stats.promptsOptimized === 0 && (
+          <p className="mt-2 text-[11px] text-gray-400">
+            No prompts optimized yet today — click Apply on a suggestion to see stats here.
+          </p>
+        )}
       </section>
 
       <footer className="mt-3 flex justify-end">
