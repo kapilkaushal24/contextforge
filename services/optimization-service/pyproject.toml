@@ -1,7 +1,7 @@
 [project]
 name = "optimization-service"
 version = "0.1.0"
-description = "Optimization API — Phase 5 skeleton: routing, DTOs, and layering, no real optimization logic yet."
+description = "Privacy-first prompt optimization API with guarded deterministic and semantic compression."
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",

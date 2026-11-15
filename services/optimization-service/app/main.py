@@ -35,8 +35,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         title="AI Token Optimizer API",
         version="0.1.0",
-        description="Phase 5 skeleton — routing, DTOs, and layering are real; "
-        "optimization logic is placeholder until Phases 6-9 land.",
+        description="Privacy-first prompt optimization API with deterministic, structural, "
+        "and optional guarded semantic compression.",
     )
 
     app.add_middleware(RequestIdMiddleware)
