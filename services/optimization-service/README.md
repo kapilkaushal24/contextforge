@@ -1,8 +1,8 @@
 # optimization-service
 
 FastAPI backend implementing the `/api/v1/*` surface described in
-[docs/api/contracts.md](../../docs/api/contracts.md). This is the **Phase 5 skeleton**: routing,
-DTOs, error handling, request correlation, and Clean Architecture layering are real and tested;
+[docs/api/contracts.md](../../docs/api/contracts.md). Routing, DTOs, error handling, request
+correlation, and Clean Architecture layering are in place;
 `/optimize` now runs the **deterministic strategy** (Phase 6: whitespace cleanup, exact duplicate
 line/sentence removal, aggressive-mode pleasantry removal; fenced code never touched; no LLM).
 Token counts come from per-provider tokenizers (Phase 7, `packages/tokenizers`; always labeled
@@ -16,7 +16,8 @@ Any LLM failure or unsafe rewrite falls back to the deterministic result.
 (ADR-006). `/optimize` returns `confidence`, `semanticSimilarity`, `constraintPreservation`,
 `requiresReview` and `reviewReasons`; `/validate` scores any original/optimized pair. A dropped
 negation, number, identifier, quote or code block caps confidence at 0.5, forcing review.
-`/analyze` does rule-based code-vs-general detection; its redundancy signal is still a placeholder.
+`/analyze` does rule-based code-vs-general detection and flags repeated prose lines/sentences
+using normalized exact matching; fenced code and phrases shorter than three words are ignored.
 **Security hardening (Phase 11, ADR-011):** `optimization_core.pii.detect_pii` (local,
 deterministic — email/phone/SSN/credit-card/API-key) blocks cloud LLM routing by default
 regardless of `privacyPolicy` (`AITO_BLOCK_PII_FROM_CLOUD`); detected categories are reported in
@@ -63,7 +64,13 @@ structured, request-ID-correlated line with per-stage timings (deterministic/str
 validation) — a lightweight substitute for a full tracing backend, see ADR-012 for why. Any
 unexpected exception now returns the standard error envelope instead of a raw traceback.
 
-**Testing/evaluation (Phase 13):** 100% line coverage (`pytest --cov=app`) — closed gaps that
+**Provider metadata:** `/providers` reports OpenAI and Anthropic as available when that provider
+is selected, LLM optimization is enabled, and a non-empty key is configured. `/models` reports
+the configured model and configured optimizer pricing. Availability reflects configuration only;
+it does not probe live provider connectivity.
+
+**Testing/evaluation (Phase 13):** the Phase 13 coverage run reached 100% line coverage
+(`pytest --cov=app`) and closed gaps that
 had zero coverage until now: `/analyze`'s error path, `/feedback`, `/providers`, `/models`,
 `/settings`, `/usage`, and the composition root's real-provider registration/shutdown path.
 See [ml/evaluation](../../ml/evaluation) for the benchmark dataset, live-report script, and
@@ -71,15 +78,14 @@ the in-process regression test (`tests/evaluation/`) that runs the same dataset 
 
 ## Not yet implemented
 
-- A real redundancy signal for `/analyze` (currently always `false`).
 - Validator calibration: weights and the 0.85 threshold are untuned heuristics — the eval
   harness (`ml/evaluation/`) is the tool to calibrate them against, not yet used for that.
 - Live-key verification of the OpenAI/Anthropic adapters (tested against mocked transports only).
-- Database/Redis (no persistence needed yet — settings are in-memory, usage stats are zeroed).
-- `/providers` and `/models` still honestly return empty lists rather than fabricated data.
+- Database/Redis (settings are in-memory and `/usage` returns zeroes until analytics
+  persistence lands).
 - The image is not yet pushed anywhere or deployed — `docker-build` in CI only validates it builds.
-- Security scanning (`pip-audit`, `bandit`, `npm audit`) runs in CI but is informational, not a
-  merge gate yet (ADR-013) — no triage process exists for findings.
+- Live security scanning and CI behavior still need confirmation on a real GitHub Actions runner;
+  local runs do not verify repository branch protection or hosted workflow configuration.
 - CI has not yet run on a real GitHub Actions runner — every job's commands were verified locally
   in a freshly created, isolated venv/npm install, which is the closest local proxy (ADR-013).
 

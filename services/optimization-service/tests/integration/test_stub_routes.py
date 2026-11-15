@@ -1,8 +1,8 @@
-"""Coverage for the routes that had zero test coverage: /analyze, /feedback,
-/providers, /models, /settings, /usage. Several of these are intentional honest
-placeholders (empty lists, zeroed summaries — see each route module's docstring for
-why); these tests pin that placeholder *shape* so a future implementation change is a
-deliberate decision, not a silent regression."""
+"""Coverage for /analyze, /feedback, /providers, /models, /settings, and /usage.
+
+Persisted analytics remain a deliberate placeholder; tests pin that response shape until
+the storage implementation is defined.
+"""
 
 from fastapi.testclient import TestClient
 
@@ -49,16 +49,27 @@ def test_feedback_rejects_invalid_rating(client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_providers_returns_honest_empty_list(client: TestClient) -> None:
+def test_providers_reports_supported_provider_availability(client: TestClient) -> None:
     response = client.get("/api/v1/providers")
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json() == [
+        {"id": "openai", "name": "OpenAI", "status": "unavailable"},
+        {"id": "anthropic", "name": "Anthropic", "status": "unavailable"},
+    ]
 
 
-def test_models_returns_honest_empty_list(client: TestClient) -> None:
+def test_models_reports_configured_model_and_pricing(client: TestClient) -> None:
     response = client.get("/api/v1/models")
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json() == [
+        {
+            "id": "gpt-4o-mini",
+            "providerId": "openai",
+            "name": "gpt-4o-mini",
+            "inputPricePer1k": 0.00015,
+            "outputPricePer1k": 0.0006,
+        }
+    ]
 
 
 def test_get_settings_returns_defaults(client: TestClient) -> None:
