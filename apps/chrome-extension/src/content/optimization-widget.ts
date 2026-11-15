@@ -1,5 +1,6 @@
 import { requestOptimization } from "../services/messaging.js";
 import { getSettings } from "../services/settings-store.js";
+import { recordAppliedOptimization } from "../services/stats-store.js";
 import type { IPlatformAdapter } from "../types/platform-adapter.js";
 import {
   initialWidgetState,
@@ -100,9 +101,10 @@ export class OptimizationWidget {
 
   private handleApply(): void {
     if (this.state.phase !== "result") return;
-    const { optimizedText } = this.state.result;
+    const { optimizedText, tokensSaved, reductionPercentage } = this.state.result;
     this.dispatch({ type: "APPLY_CLICKED" });
     this.setTextProgrammatically(optimizedText);
+    void recordAppliedOptimization({ tokensSaved, reductionPercentage });
   }
 
   private handleUndo(): void {
